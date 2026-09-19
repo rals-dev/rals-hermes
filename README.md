@@ -6,7 +6,7 @@ profile's API server with that profile's own key, aggregates health, sessions,
 runs and jobs, streams live tool activity to the browser, and serves the
 embedded Vue UI — without ever starting an agent run.
 
-**Status:** M0 (prerequisites). See `docs/prd.md` § 7 for the milestone plan.
+**Status:** M1 in progress (T-101 done). See `docs/prd.md` § 7 for the milestone plan.
 
 ## Documents
 
@@ -32,10 +32,16 @@ scripts/          operator and developer scripts
 Requirements: Go 1.25+, Node 24+ (frontend only), `jq` (fixtures only).
 
 ```
+cp config.example.yaml config.yaml          # point base_url at your tunnel or stack
+export BFF_API_KEY=... HERMES_KEY_DEFAULT=... HERMES_KEY_CODER=... HERMES_KEY_TESTER=... HERMES_KEY_PRODUCT=...
 make test     # go test -race ./...
 make lint     # golangci-lint run
-make run      # go run ./cmd/bff
+make run      # go run ./cmd/bff  → http://127.0.0.1:8080/healthz
 ```
+
+The process refuses to start if any referenced environment variable is
+empty. `LOG_LEVEL` (debug|info|warn|error) controls verbosity; all logs are
+JSON on stdout.
 
 Tested against Hermes **0.21.2**, image digest `sha256:f79d70bc1d23c7553f762c4eb937ba2991e3ba07c15a5e71affa57b3d20b10a5`.
 

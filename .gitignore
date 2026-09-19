@@ -25,3 +25,4 @@ web/.vite/
 
 # Local tooling
 .claude/settings.local.json
+config.yaml

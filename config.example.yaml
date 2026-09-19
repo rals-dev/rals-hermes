@@ -1,0 +1,39 @@
+# Example BFF configuration. Copy to config.yaml and adjust base URLs.
+# Secrets are NEVER written here: each *_env field names an environment
+# variable that must be non-empty at start-up, or the process exits.
+
+server:
+  addr: ":8080"
+  read_timeout: 10s
+  shutdown_timeout: 10s
+
+auth:
+  key_env: BFF_API_KEY      # the secret typed into the login page
+  session_ttl: 24h
+
+cache:
+  ttl: 3s
+
+activity:
+  poll_interval: 5s
+  window: 10m
+  max_sessions_per_profile: 10
+  idle_stop_after: 30s
+
+upstream:
+  timeout: 2s
+  profiles:
+    # Local development through an SSH tunnel: http://127.0.0.1:8642
+    # In the compose stack:                    http://hermes:8642
+    - name: default
+      base_url: http://127.0.0.1:8642
+      key_env: HERMES_KEY_DEFAULT
+    - name: coder-agent
+      base_url: http://127.0.0.1:8642/p/coder-agent
+      key_env: HERMES_KEY_CODER
+    - name: tester-agent
+      base_url: http://127.0.0.1:8642/p/tester-agent
+      key_env: HERMES_KEY_TESTER
+    - name: product-agent
+      base_url: http://127.0.0.1:8642/p/product-agent
+      key_env: HERMES_KEY_PRODUCT
