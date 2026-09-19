@@ -1,0 +1,82 @@
+{
+  "status": "ok",
+  "readiness": {
+    "status": "ok",
+    "checks": {
+      "state_db": {
+        "status": "ok"
+      },
+      "session_store": {
+        "status": "ok"
+      },
+      "config": {
+        "status": "ok"
+      },
+      "model": {
+        "status": "ok"
+      },
+      "disk": {
+        "status": "ok",
+        "used_percent": 10.9,
+        "free_bytes": 194764505088
+      },
+      "gateway": {
+        "status": "ok",
+        "state": "running",
+        "connected_platforms": 4,
+        "platforms": 4
+      },
+      "background_queues": {
+        "status": "ok",
+        "active_api_runs": 0,
+        "process_completions": 0,
+        "active_delegations": 0
+      }
+    }
+  },
+  "platform": "hermes-agent",
+  "version": "0.21.2",
+  "gateway_state": "running",
+  "platforms": {
+    "api_server": {
+      "state": "connected",
+      "error_code": null,
+      "error_message": null,
+      "updated_at": "2026-09-19T14:15:11.038965+00:00",
+      "writer_pid": 159,
+      "writer_start_time": 63801764
+    },
+    "telegram": {
+      "state": "connected",
+      "error_code": null,
+      "error_message": null,
+      "updated_at": "2026-09-19T14:15:11.026078+00:00",
+      "writer_pid": 159,
+      "writer_start_time": 63801764,
+      "needs_attention": false,
+      "retrying_since": null
+    },
+    "coder-agent:telegram": {
+      "state": "connected",
+      "error_code": null,
+      "error_message": null,
+      "updated_at": "2026-09-19T14:15:25.093774+00:00",
+      "writer_pid": 159,
+      "writer_start_time": 63801764
+    },
+    "tester-agent:telegram": {
+      "state": "connected",
+      "error_code": null,
+      "error_message": null,
+      "updated_at": "2026-09-19T14:15:40.620393+00:00",
+      "writer_pid": 159,
+      "writer_start_time": 63801764
+    }
+  },
+  "active_agents": 0,
+  "gateway_busy": false,
+  "gateway_drainable": true,
+  "exit_reason": null,
+  "updated_at": "2026-09-19T14:15:48.645166+00:00",
+  "pid": 159
+}

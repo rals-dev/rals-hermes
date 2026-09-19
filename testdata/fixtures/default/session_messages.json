@@ -1,0 +1,389 @@
+{
+  "object": "list",
+  "session_id": "20260913_163024_5d910738",
+  "data": [
+    {
+      "id": 194,
+      "session_id": "20260913_163024_5d910738",
+      "role": "user",
+      "content": "<redacted 4 chars>",
+      "tool_call_id": null,
+      "tool_calls": null,
+      "tool_name": null,
+      "timestamp": 1789317024.0,
+      "token_count": null,
+      "finish_reason": null,
+      "reasoning": null,
+      "reasoning_content": null,
+      "display_kind": null
+    },
+    {
+      "id": 195,
+      "session_id": "20260913_163024_5d910738",
+      "role": "assistant",
+      "content": "<redacted 31 chars>",
+      "tool_call_id": null,
+      "tool_calls": null,
+      "tool_name": null,
+      "timestamp": 1789317033.662827,
+      "token_count": null,
+      "finish_reason": "stop",
+      "reasoning": null,
+      "reasoning_content": null,
+      "display_kind": null
+    },
+    {
+      "id": 196,
+      "session_id": "20260913_163024_5d910738",
+      "role": "session_meta",
+      "content": null,
+      "tool_call_id": null,
+      "tool_calls": null,
+      "tool_name": null,
+      "timestamp": 1789317033.7601395,
+      "token_count": null,
+      "finish_reason": null,
+      "reasoning": null,
+      "reasoning_content": null,
+      "display_kind": null
+    },
+    {
+      "id": 197,
+      "session_id": "20260913_163024_5d910738",
+      "role": "user",
+      "content": "<redacted 22 chars>",
+      "tool_call_id": null,
+      "tool_calls": null,
+      "tool_name": null,
+      "timestamp": 1789347936.0,
+      "token_count": null,
+      "finish_reason": null,
+      "reasoning": null,
+      "reasoning_content": null,
+      "display_kind": null
+    },
+    {
+      "id": 198,
+      "session_id": "20260913_163024_5d910738",
+      "role": "assistant",
+      "content": "<redacted 0 chars>",
+      "tool_call_id": null,
+      "tool_calls": [
+        {
+          "id": "call_IbrbBa2SIsTLbW1KHsU2cZVx",
+          "call_id": "call_IbrbBa2SIsTLbW1KHsU2cZVx",
+          "response_item_id": "fc_03d2992b1e026b49016aa748692a3087d0b07b3f28518bff94",
+          "type": "function",
+          "function": {
+            "name": "skill_view",
+            "arguments": "<redacted 23 chars>"
+          }
+        }
+      ],
+      "tool_name": null,
+      "timestamp": 1789347948.1088006,
+      "token_count": null,
+      "finish_reason": "tool_calls",
+      "reasoning": "**Inspecting deferred cronjob with skill_view**",
+      "reasoning_content": "**Inspecting deferred cronjob with skill_view**",
+      "display_kind": null
+    },
+    {
+      "id": 199,
+      "session_id": "20260913_163024_5d910738",
+      "role": "tool",
+      "content": "<redacted 15407 chars>",
+      "tool_call_id": "call_IbrbBa2SIsTLbW1KHsU2cZVx",
+      "tool_calls": null,
+      "tool_name": "skill_view",
+      "timestamp": 1789347948.3618615,
+      "token_count": null,
+      "finish_reason": null,
+      "reasoning": null,
+      "reasoning_content": null,
+      "display_kind": null
+    },
+    {
+      "id": 200,
+      "session_id": "20260913_163024_5d910738",
+      "role": "assistant",
+      "content": "<redacted 0 chars>",
+      "tool_call_id": null,
+      "tool_calls": [
+        {
+          "id": "call_Cd2EDaiHvwDq5UOtDPKA3upA",
+          "call_id": "call_Cd2EDaiHvwDq5UOtDPKA3upA",
+          "response_item_id": "fc_03d2992b1e026b49016aa74870581887d0bd84762b2579d205",
+          "type": "function",
+          "function": {
+            "name": "skill_view",
+            "arguments": "<redacted 70 chars>"
+          }
+        }
+      ],
+      "tool_name": null,
+      "timestamp": 1789347953.2732158,
+      "token_count": null,
+      "finish_reason": "tool_calls",
+      "reasoning": null,
+      "reasoning_content": null,
+      "display_kind": null
+    },
+    {
+      "id": 201,
+      "session_id": "20260913_163024_5d910738",
+      "role": "tool",
+      "content": "<redacted 5395 chars>",
+      "tool_call_id": "call_Cd2EDaiHvwDq5UOtDPKA3upA",
+      "tool_calls": null,
+      "tool_name": "skill_view",
+      "timestamp": 1789347953.3869703,
+      "token_count": null,
+      "finish_reason": null,
+      "reasoning": null,
+      "reasoning_content": null,
+      "display_kind": null
+    },
+    {
+      "id": 202,
+      "session_id": "20260913_163024_5d910738",
+      "role": "assistant",
+      "content": "<redacted 0 chars>",
+      "tool_call_id": null,
+      "tool_calls": [
+        {
+          "id": "call_Zvmmiz4aFH9SjMrPq7juuYfM",
+          "call_id": "call_Zvmmiz4aFH9SjMrPq7juuYfM",
+          "response_item_id": "fc_03d2992b1e026b49016aa74875807c87d08576f8325247376c",
+          "type": "function",
+          "function": {
+            "name": "tool_search",
+            "arguments": "<redacted 55 chars>"
+          }
+        }
+      ],
+      "tool_name": null,
+      "timestamp": 1789347958.3518884,
+      "token_count": null,
+      "finish_reason": "tool_calls",
+      "reasoning": "**Searching for cron jobs**",
+      "reasoning_content": "**Searching for cron jobs**",
+      "display_kind": null
+    },
+    {
+      "id": 203,
+      "session_id": "20260913_163024_5d910738",
+      "role": "tool",
+      "content": "<redacted 799 chars>",
+      "tool_call_id": "call_Zvmmiz4aFH9SjMrPq7juuYfM",
+      "tool_calls": null,
+      "tool_name": "tool_search",
+      "timestamp": 1789347958.5606089,
+      "token_count": null,
+      "finish_reason": null,
+      "reasoning": null,
+      "reasoning_content": null,
+      "display_kind": null
+    },
+    {
+      "id": 204,
+      "session_id": "20260913_163024_5d910738",
+      "role": "assistant",
+      "content": "<redacted 0 chars>",
+      "tool_call_id": null,
+      "tool_calls": [
+        {
+          "id": "call_jH7JsXHGqossLUVB7MzPBh4A",
+          "call_id": "call_jH7JsXHGqossLUVB7MzPBh4A",
+          "response_item_id": "fc_03d2992b1e026b49016aa7487ab58487d08b5273e6352fe1ba",
+          "type": "function",
+          "function": {
+            "name": "tool_describe",
+            "arguments": "<redacted 28 chars>"
+          }
+        }
+      ],
+      "tool_name": null,
+      "timestamp": 1789347963.4422948,
+      "token_count": null,
+      "finish_reason": "tool_calls",
+      "reasoning": null,
+      "reasoning_content": null,
+      "display_kind": null
+    },
+    {
+      "id": 205,
+      "session_id": "20260913_163024_5d910738",
+      "role": "tool",
+      "content": "<redacted 6282 chars>",
+      "tool_call_id": "call_jH7JsXHGqossLUVB7MzPBh4A",
+      "tool_calls": null,
+      "tool_name": "tool_describe",
+      "timestamp": 1789347963.4671876,
+      "token_count": null,
+      "finish_reason": null,
+      "reasoning": null,
+      "reasoning_content": null,
+      "display_kind": null
+    },
+    {
+      "id": 206,
+      "session_id": "20260913_163024_5d910738",
+      "role": "assistant",
+      "content": "<redacted 0 chars>",
+      "tool_call_id": null,
+      "tool_calls": [
+        {
+          "id": "call_XelyP5lVpNQdUR1fj59gZmJH",
+          "call_id": "call_XelyP5lVpNQdUR1fj59gZmJH",
+          "response_item_id": "fc_03d2992b1e026b49016aa7487f413c87d097301dcd5cb5ce49",
+          "type": "function",
+          "function": {
+            "name": "tool_call",
+            "arguments": "<redacted 67 chars>"
+          }
+        }
+      ],
+      "tool_name": null,
+      "timestamp": 1789347968.0607417,
+      "token_count": null,
+      "finish_reason": "tool_calls",
+      "reasoning": null,
+      "reasoning_content": null,
+      "display_kind": null
+    },
+    {
+      "id": 207,
+      "session_id": "20260913_163024_5d910738",
+      "role": "tool",
+      "content": "<redacted 840 chars>",
+      "tool_call_id": "call_XelyP5lVpNQdUR1fj59gZmJH",
+      "tool_calls": null,
+      "tool_name": "cronjob_manage",
+      "timestamp": 1789347968.3760467,
+      "token_count": null,
+      "finish_reason": null,
+      "reasoning": null,
+      "reasoning_content": null,
+      "display_kind": null
+    },
+    {
+      "id": 208,
+      "session_id": "20260913_163024_5d910738",
+      "role": "assistant",
+      "content": "<redacted 323 chars>",
+      "tool_call_id": null,
+      "tool_calls": null,
+      "tool_name": null,
+      "timestamp": 1789347974.8896844,
+      "token_count": null,
+      "finish_reason": "stop",
+      "reasoning": "**Explaining cron schedule in UTC**",
+      "reasoning_content": "**Explaining cron schedule in UTC**",
+      "display_kind": null
+    },
+    {
+      "id": 209,
+      "session_id": "20260913_163024_5d910738",
+      "role": "user",
+      "content": "<redacted 37 chars>",
+      "tool_call_id": null,
+      "tool_calls": null,
+      "tool_name": null,
+      "timestamp": 1789348103.0,
+      "token_count": null,
+      "finish_reason": null,
+      "reasoning": null,
+      "reasoning_content": null,
+      "display_kind": null
+    },
+    {
+      "id": 210,
+      "session_id": "20260913_163024_5d910738",
+      "role": "assistant",
+      "content": "<redacted 0 chars>",
+      "tool_call_id": null,
+      "tool_calls": [
+        {
+          "id": "call_aChW5n3yzg4f1p1wwn8biLXW",
+          "call_id": "call_aChW5n3yzg4f1p1wwn8biLXW",
+          "response_item_id": "fc_03d2992b1e026b49016aa7490e750887d0a029d714c9e30f09",
+          "type": "function",
+          "function": {
+            "name": "tool_call",
+            "arguments": "<redacted 117 chars>"
+          }
+        }
+      ],
+      "tool_name": null,
+      "timestamp": 1789348111.6138675,
+      "token_count": null,
+      "finish_reason": "tool_calls",
+      "reasoning": "**Verifying scheduler timezone assumptions**\n**Updating job schedule to UTC cron**\n\nSaya ubah jadwalnya ke Senin pukul 05.00 WIB (22.00 UTC hari Minggu), lalu verifikasi jadwal baru.",
+      "reasoning_content": "**Verifying scheduler timezone assumptions**\n**Updating job schedule to UTC cron**\n\nSaya ubah jadwalnya ke Senin pukul 05.00 WIB (22.00 UTC hari Minggu), lalu verifikasi jadwal baru.",
+      "display_kind": null
+    },
+    {
+      "id": 211,
+      "session_id": "20260913_163024_5d910738",
+      "role": "tool",
+      "content": "<redacted 739 chars>",
+      "tool_call_id": "call_aChW5n3yzg4f1p1wwn8biLXW",
+      "tool_calls": null,
+      "tool_name": "cronjob_manage",
+      "timestamp": 1789348111.8242285,
+      "token_count": null,
+      "finish_reason": null,
+      "reasoning": null,
+      "reasoning_content": null,
+      "display_kind": null
+    },
+    {
+      "id": 212,
+      "session_id": "20260913_163024_5d910738",
+      "role": "assistant",
+      "content": "<redacted 0 chars>",
+      "tool_call_id": null,
+      "tool_calls": [
+        {
+          "id": "call_kRED60MINkrajZ9csDltgrgh",
+          "call_id": "call_kRED60MINkrajZ9csDltgrgh",
+          "response_item_id": "fc_03d2992b1e026b49016aa7491231e887d09c5b6e6010fb85ae",
+          "type": "function",
+          "function": {
+            "name": "tool_call",
+            "arguments": "<redacted 67 chars>"
+          }
+        }
+      ],
+      "tool_name": null,
+      "timestamp": 1789348115.0651696,
+      "token_count": null,
+      "finish_reason": "tool_calls",
+      "reasoning": null,
+      "reasoning_content": null,
+      "display_kind": null
+    },
+    {
+      "id": 213,
+      "session_id": "20260913_163024_5d910738",
+      "role": "tool",
+      "content": "<redacted 841 chars>",
+      "tool_call_id": "call_kRED60MINkrajZ9csDltgrgh",
+      "tool_calls": null,
+      "tool_name": "cronjob_manage",
+      "timestamp": 1789348115.1270213,
+      "token_count": null,
+      "finish_reason": null,
+      "reasoning": null,
+      "reasoning_content": null,
+      "display_kind": null
+    }
+  ],
+  "pagination": {
+    "limit": 20,
+    "offset": 0,
+    "order": "oldest",
+    "returned": 20
+  }
+}

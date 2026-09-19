@@ -14,3 +14,9 @@ Kanban is out of scope for v1. The session-based feed (ADR-004) already surfaces
 
 - Epic 3 shrinks to scheduled jobs only.
 - If reconsidered, the only acceptable path is `hermes-kanban` treated as a fifth, failure-tolerant upstream.
+
+## Addendum 2026-09-19 (after T-003)
+
+Sessions created by Kanban dispatch carry `source: "kanban"` in
+`/api/sessions`. The board itself stays out of v1, but the *work* it
+dispatches is visible in the activity feed and session lists.

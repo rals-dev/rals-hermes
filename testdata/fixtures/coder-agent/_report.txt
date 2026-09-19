@@ -1,0 +1,13 @@
+/health                          200
+/health/detailed                 200
+/v1/capabilities                 200
+/v1/models                       200
+/api/model/options               200
+/v1/skills                       500
+/v1/toolsets                     200
+/api/jobs                        200
+/v1/runs                         405
+/api/sessions?limit=5&offset=0&include_children=true 200
+/api/sessions/20260918_091519_c17619 200
+/api/sessions/20260918_091519_c17619/messages?limit=20 200
+isolation: default key on /p/coder-agent 401  (expect 401)

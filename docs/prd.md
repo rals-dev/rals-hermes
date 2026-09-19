@@ -177,7 +177,7 @@ reference: [API Server — Hermes Agent docs](https://hermes-agent.nousresearch.
 | Method | Path | Used for |
 | --- | --- | --- |
 | `GET` | `/health` | Cheap liveness probe; no readiness checks |
-| `GET` | `/health/detailed` | **Primary source for the overview** — config status, state DB, model, disk, gateway/platform, count of active *API* runs, pending completions, active delegations. Counts only, no run IDs |
+| `GET` | `/health/detailed` | **Gateway-wide** readiness: config, state DB, model, disk, per-platform state (`platforms["<profile>:telegram"]`), `active_api_runs`, `active_delegations`, `active_agents`. Identical on every profile prefix — see `docs/t003-findings.md` § 2 |
 | `GET` | `/v1/capabilities` | Feature detection; decides which endpoints are safe to call |
 | `GET` | `/v1/models` | Profile model name/alias |
 | `GET` | `/api/model/options` | Authenticated providers, model list, per-model pricing (pricing unused in v1) |
@@ -188,21 +188,24 @@ reference: [API Server — Hermes Agent docs](https://hermes-agent.nousresearch.
 | `GET` | `/v1/runs/{run_id}/events` | SSE: tool-call progress, token deltas, lifecycle |
 | `GET` | `/api/jobs` | Scheduled jobs |
 | `GET` | `/api/jobs/{job_id}` | Job definition and last run state |
-| `GET` | `/v1/skills` | Agent skill enumeration |
+| `GET` | `/v1/skills` | Agent skill enumeration — **returns 500 on 0.21.2**; optional section |
 | `GET` | `/v1/toolsets` | Configured toolsets with their concrete tools |
 
 All of the above are read-only. **The BFF calls no POST endpoint on Hermes.**
 
 Known gaps (verified against the documentation on 2026-09-19):
 
-- There is **no endpoint that lists runs**. `run_id` values must come from
-  elsewhere.
+- There is **no endpoint that lists runs** (`GET /v1/runs` → 405, verified).
+  `run_id` values must come from elsewhere.
+- `/health/detailed` is gateway-global; only reachability/auth and the
+  `platforms["<profile>:telegram"]` entry are per profile.
 - Runs are "per-profile scoped … for the profile that created the run
   (including runs started via `/api/sessions/{id}/chat/stream`)". The docs
   never state that Telegram- or `delegate_task`-originated work is registered
   in `/v1/runs`. Task T-003 verifies this empirically before the feed is built.
-- The per-session response schema of `/api/sessions` is not documented. T-003
-  captures it.
+- The per-session schema of `/api/sessions` is undocumented; it is recorded
+  in `docs/t003-findings.md` § 3 (includes token counters and
+  `estimated_cost_usd`/`actual_cost_usd`).
 
 ### Authentication
 
@@ -425,9 +428,9 @@ commit per ticket straight to `main`, test-first (ADR-019).
 
 | ID | Task | Acceptance criteria |
 | --- | --- | --- |
-| T-001 | ~~Decide topology~~ — done: multiplex (ADR-001) | — |
-| T-002 | Confirm `API_SERVER_KEY` per profile incl. `product-agent` | Operator checklist 0.2 ticked; cross-profile key returns 401 |
-| T-003 | `scripts/collect-fixtures.sh` + fixtures for 4 profiles × 14 endpoints, redacted | Fixtures in `testdata/fixtures/`; report answers whether Telegram work appears in `/v1/runs` and documents the `/api/sessions` and `/messages` shapes |
+| T-001 | Decide topology | **Done** — multiplex (ADR-001) |
+| T-002 | Confirm `API_SERVER_KEY` per profile incl. `product-agent` | **Done** — keys generated for the three named profiles; cross-profile key returns 401; `API_SERVER_HOST=0.0.0.0` set |
+| T-003 | `scripts/collect-fixtures.sh` + fixtures for 4 profiles × 14 endpoints, redacted | **Done** — `testdata/fixtures/`, findings in `docs/t003-findings.md`; one cheap follow-up check remains (§ 7 there) |
 | T-004 | Verify `/v1/capabilities` per profile | Feature list recorded; cross-profile discrepancies reported |
 | T-005 | Rewrite this PRD, write ADRs, scaffold repo, `git init`, public GitHub repo | This document; `docs/decisions/`; CI skeleton green on an empty module |
 | T-006 | Operator pins the Hermes image digest | Checklist 0.1 ticked |

@@ -1,0 +1,49 @@
+{
+  "job": {
+    "id": "c9275abafbcc",
+    "name": "Weekly Tech Radar",
+    "prompt": "<redacted 51 chars>",
+    "skills": [
+      "tech-radar"
+    ],
+    "skill": "tech-radar",
+    "model": null,
+    "provider": null,
+    "provider_snapshot": "openai-codex",
+    "model_snapshot": "gpt-5.6-luna",
+    "base_url": null,
+    "script": null,
+    "no_agent": false,
+    "monitor_script": null,
+    "monitor_url": null,
+    "monitor_state": null,
+    "context_from": null,
+    "schedule": {
+      "kind": "cron",
+      "expr": "0 22 * * 0",
+      "display": "0 22 * * 0"
+    },
+    "schedule_display": "0 22 * * 0",
+    "repeat": {
+      "times": null,
+      "completed": 3
+    },
+    "enabled": true,
+    "state": "scheduled",
+    "paused_at": null,
+    "paused_reason": null,
+    "created_at": "2026-09-12T16:59:22.765935+00:00",
+    "next_run_at": "2026-09-20T22:00:00+00:00",
+    "last_run_at": "2026-09-14T01:13:00.602788+00:00",
+    "last_status": "ok",
+    "last_error": null,
+    "last_delivery_error": null,
+    "last_delivery_unverified": null,
+    "failure_streak": 0,
+    "deliver": "telegram",
+    "origin": null,
+    "enabled_toolsets": null,
+    "workdir": null,
+    "fire_claim": null
+  }
+}

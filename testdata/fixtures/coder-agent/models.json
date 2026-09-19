@@ -1,0 +1,14 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "coder-agent",
+      "object": "model",
+      "created": 1789827440,
+      "owned_by": "hermes",
+      "permission": [],
+      "root": "coder-agent",
+      "parent": null
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "tester-agent",
+      "object": "model",
+      "created": 1789827444,
+      "owned_by": "hermes",
+      "permission": [],
+      "root": "tester-agent",
+      "parent": null
+    }
+  ]
+}

@@ -37,7 +37,7 @@ make lint     # golangci-lint run
 make run      # go run ./cmd/bff
 ```
 
-Tested against Hermes image digest: _to be filled in at the end of M0_.
+Tested against Hermes **0.21.2**, image digest `sha256:f79d70bc1d23c7553f762c4eb937ba2991e3ba07c15a5e71affa57b3d20b10a5`.
 
 ## Security model in one paragraph
 

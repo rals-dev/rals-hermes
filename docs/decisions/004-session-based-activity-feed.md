@@ -18,3 +18,11 @@ The Hermes API server has no endpoint that lists runs; `/health/detailed` return
 - The BFF now holds small in-memory state (cursors per tracked session); still no database.
 - Load is bounded by ADR-018 (lazy lifecycle, windows, caps).
 - Delegations are visible through child sessions (`include_children`).
+
+## Addendum 2026-09-19 (after T-003)
+
+Confirmed by fixtures: `GET /v1/runs` is 405, `/health/detailed` is
+gateway-global (identical on every prefix), and sessions expose
+`message_count`, `last_active`, `parent_session_id`, `end_reason` and
+integer-id messages with `offset`-based pagination — enough for an
+incremental poller. See `docs/t003-findings.md` § 3–4.

@@ -36,12 +36,15 @@ command -v jq >/dev/null || { echo "jq is required" >&2; exit 1; }
 #  - absolute home paths are generalised.
 REDACT_JQ='
 def freetext_keys: ["content","text","message","prompt","summary","title","preview","args","arguments","result","output","input","error_message","instructions","description","system_prompt","name_hint"];
+def identity_keys: ["user_id","chat_id","username","email","phone"];
 def looks_secret: test("^(sk-|hm-|hermes_)[A-Za-z0-9_-]{16,}$") or test("^[A-Fa-f0-9]{48,}$") or test("^[A-Za-z0-9+/=_-]{56,}$");
 def redact:
   if type == "object" then
     with_entries(
       if (.key | IN(freetext_keys[])) and (.value | type == "string")
       then .value = "<redacted \(.value | length) chars>"
+      elif (.key | IN(identity_keys[])) and (.value != null)
+      then .value = "<redacted id>"
       else .value |= redact end)
   elif type == "array" then map(redact)
   elif type == "string" then
