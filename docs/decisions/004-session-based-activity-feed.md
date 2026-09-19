@@ -26,3 +26,7 @@ gateway-global (identical on every prefix), and sessions expose
 `message_count`, `last_active`, `parent_session_id`, `end_reason` and
 integer-id messages with `offset`-based pagination — enough for an
 incremental poller. See `docs/t003-findings.md` § 3–4.
+
+Verified the same day: a Telegram task raised `active_agents` to 1 while
+`active_api_runs` stayed 0 (`docs/t003-findings.md` § 7). Telegram and
+delegation work never appear in `/v1/runs`.

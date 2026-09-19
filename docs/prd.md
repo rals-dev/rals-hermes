@@ -430,8 +430,8 @@ commit per ticket straight to `main`, test-first (ADR-019).
 | --- | --- | --- |
 | T-001 | Decide topology | **Done** — multiplex (ADR-001) |
 | T-002 | Confirm `API_SERVER_KEY` per profile incl. `product-agent` | **Done** — keys generated for the three named profiles; cross-profile key returns 401; `API_SERVER_HOST=0.0.0.0` set |
-| T-003 | `scripts/collect-fixtures.sh` + fixtures for 4 profiles × 14 endpoints, redacted | **Done** — `testdata/fixtures/`, findings in `docs/t003-findings.md`; one cheap follow-up check remains (§ 7 there) |
-| T-004 | Verify `/v1/capabilities` per profile | Feature list recorded; cross-profile discrepancies reported |
+| T-003 | `scripts/collect-fixtures.sh` + fixtures for 4 profiles × 14 endpoints, redacted | **Done** — `testdata/fixtures/`, findings in `docs/t003-findings.md`; Telegram work confirmed invisible to `/v1/runs` |
+| T-004 | Verify `/v1/capabilities` per profile | **Done** — identical feature map on all four profiles (fixtures); `skills_api: true` despite `/v1/skills` 500 |
 | T-005 | Rewrite this PRD, write ADRs, scaffold repo, `git init`, public GitHub repo | This document; `docs/decisions/`; CI skeleton green on an empty module |
 | T-006 | Operator pins the Hermes image digest | Checklist 0.1 ticked |
 

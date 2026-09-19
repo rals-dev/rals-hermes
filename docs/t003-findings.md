@@ -95,15 +95,21 @@ The agent-detail endpoint must treat skills as an optional section
   `"paste FIREWORKS_API_KEY to activate"` — names only, no values.
 - `product-agent` has zero sessions; every other endpoint answers normally.
 
-## 7. Still open — one cheap check
+## 7. Telegram work is invisible to `/v1/runs` — confirmed
 
-While a Telegram task is running on `default`, poll the gateway:
+Polled `/health/detailed` every 2 s while sending a Telegram message to the
+`default` agent (2026-09-19, local time 21:26):
 
 ```
-watch -n 2 'curl -s -H "Authorization: Bearer $HERMES_KEY_DEFAULT" http://127.0.0.1:8642/health/detailed | jq -c ".readiness.checks.background_queues, .active_agents"'
+{"q":{"active_api_runs":0,"process_completions":0,"active_delegations":0},"active_agents":0}
+{"q":{"active_api_runs":0,"process_completions":0,"active_delegations":0},"active_agents":1}   ← Telegram task running
+{"q":{"active_api_runs":0,"process_completions":0,"active_delegations":0},"active_agents":1}
 ```
 
-If `active_api_runs` stays `0` while `active_agents` rises, Telegram work is
-confirmed invisible to `/v1/runs` and `active_agents` becomes the
-"something is running" indicator for the header. Either way the design in
-ADR-004 (session poller) is required, because runs cannot be listed.
+`active_agents` rose to 1; `active_api_runs` stayed 0. Therefore:
+
+- `active_agents` (gateway-wide) is the header's "something is running"
+  indicator.
+- `active_api_runs` counts only API-initiated runs and is shown as such.
+- Per-profile "is this agent busy?" must come from sessions: an open session
+  (`end_reason == null`) whose `last_active` is within the poll window.
