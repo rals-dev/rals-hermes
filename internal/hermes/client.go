@@ -51,6 +51,7 @@ type Client struct {
 	key     config.Secret
 	timeout time.Duration
 	http    *http.Client
+	stream  *http.Client // header timeout only; bodies live as long as ctx
 	log     *slog.Logger
 	obs     Observer
 }
@@ -76,12 +77,19 @@ func NewClient(p config.Profile, o Options) *Client {
 		}
 	}
 	base, _ := url.Parse(p.BaseURL) // validated in config
+	streamTransport := transport
+	if t, ok := transport.(*http.Transport); ok {
+		st := t.Clone()
+		st.ResponseHeaderTimeout = o.Timeout
+		streamTransport = st
+	}
 	return &Client{
 		name:    p.Name,
 		base:    base,
 		key:     p.Key,
 		timeout: o.Timeout,
 		http:    &http.Client{Transport: transport},
+		stream:  &http.Client{Transport: streamTransport},
 		log:     o.Logger.With("profile", p.Name),
 		obs:     o.Observer,
 	}
@@ -312,4 +320,46 @@ func redactURL(err error) error {
 		return fmt.Errorf("%s: %w", ue.Op, ue.Err)
 	}
 	return err
+}
+
+// Stream is an open SSE connection to Hermes. Close it when done; the
+// underlying connection is released and Hermes stops sending.
+type Stream struct {
+	Body io.ReadCloser
+}
+
+// Close releases the upstream connection.
+func (s *Stream) Close() error { return s.Body.Close() }
+
+// StreamRunEvents opens GET /v1/runs/{run_id}/events. The profile timeout
+// bounds only the wait for response headers; the body then lives as long as
+// ctx does. Non-2xx answers are returned as *UpstreamError before any body
+// is exposed, so callers can still send a normal JSON error.
+func (c *Client) StreamRunEvents(ctx context.Context, runID string) (*Stream, error) {
+	op := "GET /v1/runs/{id}/events"
+	u := *c.base
+	u.Path = c.base.Path + "/v1/runs/" + url.PathEscape(runID) + "/events"
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	if err != nil {
+		return nil, c.wrap(op, KindBadResponse, 0, err)
+	}
+	req.Header.Set("Authorization", "Bearer "+c.key.Reveal())
+	req.Header.Set("Accept", "text/event-stream")
+	req.Header.Set("Cache-Control", "no-cache")
+
+	start := time.Now()
+	resp, err := c.stream.Do(req)
+	if err != nil {
+		c.observe(op, start, c.wrap(op, KindUnreachable, 0, nil))
+		return nil, c.wrap(op, KindUnreachable, 0, redactURL(err))
+	}
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		resp.Body.Close()
+		werr := c.wrap(op, kindForStatus(resp.StatusCode), resp.StatusCode, nil)
+		c.observe(op, start, werr)
+		return nil, werr
+	}
+	c.observe(op, start, nil)
+	return &Stream{Body: resp.Body}, nil
 }
