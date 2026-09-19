@@ -74,9 +74,18 @@ func newTestDeps(t *testing.T, timeout time.Duration, specs ...profileSpec) Deps
 		}))
 	}
 	return Deps{
-		Logger:   slog.New(slog.NewTextHandler(io.Discard, nil)),
-		Version:  "test",
-		Profiles: clients,
-		CacheTTL: 3 * time.Second,
+		Logger:     slog.New(slog.NewTextHandler(io.Discard, nil)),
+		Version:    "test",
+		Profiles:   clients,
+		CacheTTL:   3 * time.Second,
+		AuthKey:    config.Secret(bffKey),
+		SessionTTL: time.Hour,
 	}
+}
+
+// authedGet performs GET path with a freshly minted session cookie.
+func authedGet(t *testing.T, h http.Handler, path string) *httptest.ResponseRecorder {
+	t.Helper()
+	c := sessionCookie(t, login(t, h, bffKey))
+	return getWithCookie(h, path, c)
 }

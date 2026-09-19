@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/rals-dev/rals-hermes/internal/cache"
+	"github.com/rals-dev/rals-hermes/internal/config"
 	"github.com/rals-dev/rals-hermes/internal/hermes"
 )
 
@@ -21,6 +22,13 @@ type Deps struct {
 	Profiles []*hermes.Client
 	// CacheTTL bounds how long upstream responses are reused.
 	CacheTTL time.Duration
+	// AuthKey is the operator secret accepted by POST /api/auth/session.
+	AuthKey config.Secret
+	// SessionTTL is the lifetime of a login cookie.
+	SessionTTL time.Duration
+
+	// now overrides the clock in tests.
+	now func() time.Time
 }
 
 // handlers holds the per-process state behind the routes.
@@ -30,6 +38,7 @@ type handlers struct {
 	profiles []*hermes.Client
 	byName   map[string]*hermes.Client
 	health   *cache.Cache[*hermes.HealthDetailed]
+	sessions *sessions
 }
 
 // NewHandler builds the root handler with all routes registered.
@@ -40,12 +49,19 @@ func NewHandler(d Deps) http.Handler {
 	if d.CacheTTL <= 0 {
 		d.CacheTTL = 3 * time.Second
 	}
+	if d.SessionTTL <= 0 {
+		d.SessionTTL = 24 * time.Hour
+	}
+	if d.now == nil {
+		d.now = time.Now
+	}
 	h := &handlers{
 		log:      d.Logger,
 		version:  d.Version,
 		profiles: d.Profiles,
 		byName:   make(map[string]*hermes.Client, len(d.Profiles)),
 		health:   cache.New[*hermes.HealthDetailed](d.CacheTTL),
+		sessions: newSessions(d.AuthKey, d.SessionTTL, d.now),
 	}
 	for _, c := range d.Profiles {
 		h.byName[c.Name()] = c
@@ -53,8 +69,14 @@ func NewHandler(d Deps) http.Handler {
 
 	r := newRouter()
 	r.handle("GET /healthz", healthz(d.Version))
-	r.handle("GET /api/overview", h.overview)
-	r.handle("GET /api/agents", h.agents)
+	r.handle("POST /api/auth/session", h.sessions.login)
+	r.handle("DELETE /api/auth/session", h.sessions.logout)
+
+	// Everything else under /api needs a session (T-106). /healthz and
+	// /metrics stay open by design.
+	auth := h.sessions.require
+	r.handle("GET /api/overview", auth(h.overview))
+	r.handle("GET /api/agents", auth(h.agents))
 	return r
 }
 

@@ -19,6 +19,7 @@ import (
 
 	"github.com/rals-dev/rals-hermes/internal/api"
 	"github.com/rals-dev/rals-hermes/internal/config"
+	"github.com/rals-dev/rals-hermes/internal/hermes"
 	"github.com/rals-dev/rals-hermes/internal/server"
 )
 
@@ -65,7 +66,18 @@ func run() error {
 		return fmt.Errorf("listen %s: %w", cfg.Server.Addr, err)
 	}
 
-	handler := api.NewHandler(api.Deps{Logger: logger, Version: version})
+	clients := make([]*hermes.Client, 0, len(cfg.Upstream.Profiles))
+	for _, p := range cfg.Upstream.Profiles {
+		clients = append(clients, hermes.NewClient(p, hermes.Options{Timeout: cfg.Upstream.Timeout, Logger: logger}))
+	}
+	handler := api.NewHandler(api.Deps{
+		Logger:     logger,
+		Version:    version,
+		Profiles:   clients,
+		CacheTTL:   cfg.Cache.TTL,
+		AuthKey:    cfg.Auth.Key,
+		SessionTTL: cfg.Auth.SessionTTL,
+	})
 	err = server.Run(ctx, ln, handler, server.Options{
 		Logger:          logger,
 		ReadTimeout:     cfg.Server.ReadTimeout,

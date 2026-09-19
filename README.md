@@ -29,7 +29,7 @@ scripts/          operator and developer scripts
 
 ## Development
 
-Requirements: Go 1.25+, Node 24+ (frontend only), `jq` (fixtures only).
+Requirements: Go 1.26+, Node 24+ (frontend only), `jq` (fixtures only).
 
 ```
 cp config.example.yaml config.yaml          # point base_url at your tunnel or stack

@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"net/http"
-	"net/http/httptest"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -38,8 +37,7 @@ type cardView struct {
 
 func getOverview(t *testing.T, h http.Handler) (int, overviewResp) {
 	t.Helper()
-	rec := httptest.NewRecorder()
-	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/overview", nil))
+	rec := authedGet(t, h, "/api/overview")
 	var body overviewResp
 	if rec.Code == http.StatusOK {
 		if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
@@ -167,8 +165,7 @@ func TestAgents_ListsProfilesInConfigOrderWithStatus(t *testing.T) {
 		profileSpec{"default", serveFixture(t, "default/health_detailed.json")},
 		profileSpec{"tester-agent", serveStatus(401)},
 	)
-	rec := httptest.NewRecorder()
-	NewHandler(deps).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/agents", nil))
+	rec := authedGet(t, NewHandler(deps), "/api/agents")
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status = %d: %s", rec.Code, rec.Body)
 	}
