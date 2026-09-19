@@ -6,7 +6,7 @@ profile's API server with that profile's own key, aggregates health, sessions,
 runs and jobs, streams live tool activity to the browser, and serves the
 embedded Vue UI — without ever starting an agent run.
 
-**Status:** M1 in progress (T-101 done). See `docs/prd.md` § 7 for the milestone plan.
+**Status:** M2 complete — BFF API done; frontend (M3) next. See `docs/prd.md` § 7 for the milestone plan.
 
 ## Documents
 
