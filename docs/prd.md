@@ -600,7 +600,7 @@ The fixtures from T-003 let most work run without a live Hermes at all.
 | Risk | Impact | Mitigation |
 | --- | --- | --- |
 | Hermes is pre-1.0 and moves fast — v0.19.0 → v0.20.0 spanned roughly 3,650 commits | Endpoints or payload shapes change between image pulls | Image pinned by digest; upgrades re-run the fixture script and diff; `/v1/capabilities` feature detection; contract fixtures in tests |
-| The API server grants full access to the agent toolset, including terminal commands | A leaked key means host takeover | Key per profile, never leaves the BFF, never logged; stays behind Tailscale |
+| The API server grants full access to the agent toolset, including terminal commands — and with `terminal.backend: local` those run unsandboxed inside the Hermes container | A leaked key means full access to the Hermes container, including every profile's `.env` | Key per profile, never leaves the BFF, never logged; port 8642 visible only to containers on the Docker networks, never published; a sandboxed terminal backend is recommended on the Hermes side |
 | CVE history on the project, including auth bypass and IDOR | Public exposure is dangerous | Never create an internet-facing Traefik route for Hermes or the BFF |
 | Aggressive UI polling | CPU load on a constrained host | TTL cache mandatory; UI polling interval ≥ 5 s; activity poller is lazy |
 | SSE event buffers expire after 5 minutes without a consumer | A backgrounded frontend loses events | UI reconnects and resyncs via run status polling |

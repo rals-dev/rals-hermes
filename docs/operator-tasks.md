@@ -90,6 +90,22 @@ srv01$ sleep 8; curl -s --max-time 5 http://<proxy-net-ip>:8642/health
 ```
 
 Expected: `{"status": "ok", "platform": "hermes-agent", "version": "0.21.2"}`.
+The gateway needs close to a minute after the restart before the listener is
+up; a "connection refused" in the first 60 s is not a failure.
+
+Hermes logs this warning after the change — read it once and take it
+seriously:
+
+> API server is network-accessible (0.0.0.0) AND the terminal backend is
+> 'local' (unsandboxed). Agent work dispatched through this endpoint runs as
+> the host user with full terminal/file access.
+
+Anyone holding a profile key can run commands inside the Hermes container,
+which includes reading every profile's `.env`. The port is visible only to
+containers on `proxy-net` and `hermes_default` (Traefik, Obsidian, later the
+BFF); it must never be published on the host, Tailscale, or the LAN.
+Switching to `terminal.backend: docker` is a Hermes decision outside this
+repository, but worth considering.
 
 - [ ] Done
 
