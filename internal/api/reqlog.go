@@ -5,6 +5,8 @@ import (
 	"log/slog"
 	"net/http"
 	"time"
+
+	"github.com/rals-dev/rals-hermes/internal/observ"
 )
 
 // reqInfo is filled in by the matched route so the access log can report the
@@ -59,7 +61,7 @@ func (w *statusWriter) Flush() {
 // requestLog emits one JSON line per request (T-109). Headers, cookies and
 // query strings are never logged: the query may carry nothing sensitive
 // today, but the rule is simpler to keep than to audit.
-func requestLog(log *slog.Logger, next http.Handler) http.Handler {
+func requestLog(log *slog.Logger, metrics *observ.Metrics, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		info := &reqInfo{}
@@ -68,12 +70,16 @@ func requestLog(log *slog.Logger, next http.Handler) http.Handler {
 		if sw.status == 0 {
 			sw.status = http.StatusOK
 		}
+		elapsed := time.Since(start)
+		if metrics != nil && info.route != "" && info.route != "GET /metrics" {
+			metrics.ObserveHTTP(info.route, sw.status, elapsed)
+		}
 		attrs := []any{
 			"method", r.Method,
 			"path", r.URL.Path,
 			"route", info.route,
 			"status", sw.status,
-			"duration_ms", time.Since(start).Milliseconds(),
+			"duration_ms", elapsed.Milliseconds(),
 			"bytes", sw.bytes,
 			"remote", clientAddr(r),
 		}

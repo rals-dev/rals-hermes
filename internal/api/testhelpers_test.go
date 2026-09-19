@@ -12,6 +12,7 @@ import (
 
 	"github.com/rals-dev/rals-hermes/internal/config"
 	"github.com/rals-dev/rals-hermes/internal/hermes"
+	"github.com/rals-dev/rals-hermes/internal/observ"
 )
 
 func fixture(t *testing.T, rel string) []byte {
@@ -55,6 +56,7 @@ type profileSpec struct {
 // handlers are exercised end to end, transport included.
 func newTestDeps(t *testing.T, timeout time.Duration, specs ...profileSpec) Deps {
 	t.Helper()
+	metrics := observ.New()
 	clients := make([]*hermes.Client, 0, len(specs))
 	for _, s := range specs {
 		var base string
@@ -69,8 +71,9 @@ func newTestDeps(t *testing.T, timeout time.Duration, specs ...profileSpec) Deps
 		}
 		p := config.Profile{Name: s.name, BaseURL: base, Key: config.Secret("key-" + s.name)}
 		clients = append(clients, hermes.NewClient(p, hermes.Options{
-			Timeout: timeout,
-			Logger:  slog.New(slog.NewTextHandler(io.Discard, nil)),
+			Timeout:  timeout,
+			Logger:   slog.New(slog.NewTextHandler(io.Discard, nil)),
+			Observer: metrics,
 		}))
 	}
 	return Deps{
@@ -80,6 +83,7 @@ func newTestDeps(t *testing.T, timeout time.Duration, specs ...profileSpec) Deps
 		CacheTTL:   3 * time.Second,
 		AuthKey:    config.Secret(bffKey),
 		SessionTTL: time.Hour,
+		Metrics:    metrics,
 	}
 }
 

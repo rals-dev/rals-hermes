@@ -11,6 +11,7 @@ import (
 	"github.com/rals-dev/rals-hermes/internal/cache"
 	"github.com/rals-dev/rals-hermes/internal/config"
 	"github.com/rals-dev/rals-hermes/internal/hermes"
+	"github.com/rals-dev/rals-hermes/internal/observ"
 )
 
 // Deps carries everything the handlers need.
@@ -27,6 +28,9 @@ type Deps struct {
 	// SessionTTL is the lifetime of a login cookie.
 	SessionTTL time.Duration
 
+	// Metrics is optional; when nil, /metrics is not served.
+	Metrics *observ.Metrics
+
 	// now overrides the clock in tests.
 	now func() time.Time
 }
@@ -39,6 +43,7 @@ type handlers struct {
 	byName   map[string]*hermes.Client
 	health   *cache.Cache[*hermes.HealthDetailed]
 	sessions *sessions
+	metrics  *observ.Metrics
 }
 
 // NewHandler builds the root handler with all routes registered.
@@ -62,6 +67,10 @@ func NewHandler(d Deps) http.Handler {
 		byName:   make(map[string]*hermes.Client, len(d.Profiles)),
 		health:   cache.New[*hermes.HealthDetailed](d.CacheTTL),
 		sessions: newSessions(d.AuthKey, d.SessionTTL, d.now),
+		metrics:  d.Metrics,
+	}
+	if h.metrics != nil {
+		h.metrics.RegisterCache("health", h.health.Stats)
 	}
 	for _, c := range d.Profiles {
 		h.byName[c.Name()] = c
@@ -69,6 +78,11 @@ func NewHandler(d Deps) http.Handler {
 
 	r := newRouter()
 	r.handle("GET /healthz", healthz(d.Version))
+	if h.metrics != nil {
+		// Unauthenticated by design: reachable only through the Traefik LAN
+		// entrypoint with an IP allow-list (ADR-008).
+		r.handle("GET /metrics", h.metrics.Handler().ServeHTTP)
+	}
 	r.handle("POST /api/auth/session", h.sessions.login)
 	r.handle("DELETE /api/auth/session", h.sessions.logout)
 
@@ -78,7 +92,7 @@ func NewHandler(d Deps) http.Handler {
 	r.handle("GET /api/overview", auth(h.overview))
 	r.handle("GET /api/agents", auth(h.agents))
 	r.handle("GET /api/agents/{profile}", auth(h.agentDetail))
-	return requestLog(d.Logger, r)
+	return requestLog(d.Logger, h.metrics, r)
 }
 
 func healthz(version string) http.HandlerFunc {

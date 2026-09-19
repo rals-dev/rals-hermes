@@ -108,6 +108,9 @@ func (h *handlers) probe(ctx context.Context, c *hermes.Client) probeResult {
 	health, _, err := h.health.Get(ctx, "health/"+c.Name(), c.HealthDetailed)
 	card := agentCard{Profile: c.Name(), LatencyMS: time.Since(start).Milliseconds()}
 	if err != nil {
+		if h.metrics != nil {
+			h.metrics.SetProfileUp(c.Name(), false)
+		}
 		h.log.Warn("profile health probe failed", "profile", c.Name(), "err", err)
 		card.Status = statusUnreachable
 		var ue *hermes.UpstreamError
@@ -123,6 +126,11 @@ func (h *handlers) probe(ctx context.Context, c *hermes.Client) probeResult {
 		card.Status = statusHealthy
 	}
 	card.Platforms = platformsFor(c.Name(), health.Platforms)
+	if h.metrics != nil {
+		h.metrics.SetProfileUp(c.Name(), card.Status == statusHealthy)
+		q := health.Readiness.Checks.BackgroundQueues
+		h.metrics.SetGateway(health.ActiveAgents, q.ActiveAPIRuns, q.ActiveDelegations)
+	}
 	return probeResult{card: card, health: health}
 }
 

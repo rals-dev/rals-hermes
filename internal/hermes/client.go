@@ -17,6 +17,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/rals-dev/rals-hermes/internal/config"
@@ -26,13 +27,21 @@ import (
 // upstream cannot exhaust memory.
 const maxBodyBytes = 8 << 20
 
+// Observer receives one callback per upstream call. kind is zero when the
+// call succeeded. Implemented by observ.Metrics.
+type Observer interface {
+	ObserveUpstream(profile, op string, status int, kind Kind, elapsed time.Duration)
+}
+
 // Options tunes a Client.
 type Options struct {
 	// Timeout bounds each request end to end. Zero means 2 s.
 	Timeout time.Duration
-	// Transport overrides the HTTP transport (tests, metrics wrappers).
+	// Transport overrides the HTTP transport (tests).
 	Transport http.RoundTripper
 	Logger    *slog.Logger
+	// Observer is optional.
+	Observer Observer
 }
 
 // Client talks to a single profile.
@@ -43,6 +52,7 @@ type Client struct {
 	timeout time.Duration
 	http    *http.Client
 	log     *slog.Logger
+	obs     Observer
 }
 
 // NewClient builds a client for profile p. The base URL has already been
@@ -73,6 +83,7 @@ func NewClient(p config.Profile, o Options) *Client {
 		timeout: o.Timeout,
 		http:    &http.Client{Transport: transport},
 		log:     o.Logger.With("profile", p.Name),
+		obs:     o.Observer,
 	}
 }
 
@@ -220,8 +231,10 @@ func (c *Client) Jobs(ctx context.Context) (*JobList, error) {
 }
 
 // getJSON performs one bounded GET and decodes a 2xx JSON body into out.
-func (c *Client) getJSON(ctx context.Context, path string, query url.Values, out any) error {
-	op := "GET " + path
+func (c *Client) getJSON(ctx context.Context, path string, query url.Values, out any) (err error) {
+	op := "GET " + opPath(path)
+	start := time.Now()
+	defer func() { c.observe(op, start, err) }()
 	ctx, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()
 
@@ -236,7 +249,6 @@ func (c *Client) getJSON(ctx context.Context, path string, query url.Values, out
 	req.Header.Set("Authorization", "Bearer "+c.key.Reveal())
 	req.Header.Set("Accept", "application/json")
 
-	start := time.Now()
 	resp, err := c.http.Do(req)
 	if err != nil {
 		c.log.Debug("upstream transport error", "op", op, "elapsed", time.Since(start).String(), "err", redactURL(err))
@@ -257,6 +269,35 @@ func (c *Client) getJSON(ctx context.Context, path string, query url.Values, out
 		return c.wrap(op, KindBadResponse, resp.StatusCode, err)
 	}
 	return nil
+}
+
+// observe reports the call outcome to the Observer, if any.
+func (c *Client) observe(op string, start time.Time, err error) {
+	if c.obs == nil {
+		return
+	}
+	var kind Kind
+	var status int
+	var ue *UpstreamError
+	if errors.As(err, &ue) {
+		kind, status = ue.Kind, ue.Status
+	} else if err == nil {
+		status = http.StatusOK
+	}
+	c.obs.ObserveUpstream(c.name, op, status, kind, time.Since(start))
+}
+
+// opPath collapses identifiers so metric labels stay low-cardinality:
+// "/api/sessions/20260913_1630/messages" → "/api/sessions/{id}/messages".
+func opPath(path string) string {
+	parts := strings.Split(path, "/")
+	for i := 2; i < len(parts); i++ {
+		switch parts[i-1] {
+		case "sessions", "runs", "jobs":
+			parts[i] = "{id}"
+		}
+	}
+	return strings.Join(parts, "/")
 }
 
 func (c *Client) wrap(op string, kind Kind, status int, cause error) error {
