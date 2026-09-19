@@ -23,7 +23,7 @@ Conventions:
 Why: fixtures and contract tests are only valid for one specific Hermes build.
 `latest` can change under us on the next `docker compose pull`.
 
-Digest observed on 2026-09-19:
+Digest observed on 2026-09-19 (Hermes reports version `0.21.2`):
 
 ```
 nousresearch/hermes-agent@sha256:f79d70bc1d23c7553f762c4eb937ba2991e3ba07c15a5e71affa57b3d20b10a5
@@ -65,6 +65,31 @@ Expected: four files (`default` uses `/srv/data/hermes/.env`), each with
 `API_SERVER_ENABLED=true` and `API_SERVER_KEY=<set>`. If `product-agent` is
 missing a key, generate one (`openssl rand -hex 32`), add it to that profile's
 `.env`, and restart the gateway.
+
+- [ ] Done
+
+### 0.2b Bind the API server to the container network
+
+Why: Hermes binds the API server to `127.0.0.1` by default (`API_SERVER_HOST`),
+which makes it reachable only from inside the Hermes container itself — not
+from the BFF container, and not through an SSH tunnel to the container IP.
+Confirmed on 2026-09-19: `/health` answered on loopback inside the container
+(version 0.21.2) but refused on the `proxy-net` address.
+
+With multiplexing there is a single listener, so only the `default` profile's
+`.env` needs the change. `0.0.0.0` inside the container exposes the port to
+the Docker networks the container is attached to (`proxy-net`,
+`hermes_default`) and nothing else; it is still not published on the host.
+`API_SERVER_KEY` remains the only guard — that is the model the PRD assumes.
+
+```
+srv01$ grep -n '^API_SERVER_HOST=' /srv/data/hermes/.env || echo 'API_SERVER_HOST=0.0.0.0' >> /srv/data/hermes/.env
+# if the line already exists with 127.0.0.1, edit its value instead of appending
+srv01$ cd /srv/stacks/hermes && docker compose restart hermes     # Telegram is briefly down
+srv01$ sleep 8; curl -s --max-time 5 http://<proxy-net-ip>:8642/health
+```
+
+Expected: `{"status": "ok", "platform": "hermes-agent", "version": "0.21.2"}`.
 
 - [ ] Done
 

@@ -77,10 +77,10 @@ frontend) and one for log shipping.
 | Host | `srv01-rals`, Ubuntu Server 26.04 LTS, small-form-factor desktop |
 | Access | Tailscale only — no port forwarding; SSH key-only |
 | Reverse proxy | Traefik on Docker network `proxy-net`; listens on `127.0.0.1:80` and `<tailscale-ip>:80` (HTTP only, no TLS — WireGuard encrypts the path) |
-| Hermes | Container `nousresearch/hermes-agent`, **pinned by digest** (see ADR-016), compose at `/srv/stacks/hermes/compose.yaml`, CPU limit 4.0, `gateway.multiplex_profiles: true` |
+| Hermes | Container `nousresearch/hermes-agent` version 0.21.2, **pinned by digest** (see ADR-016), compose at `/srv/stacks/hermes/compose.yaml`, CPU limit 4.0, `gateway.multiplex_profiles: true` |
 | Hermes volume | Host `/srv/data/hermes` → container `/opt/data` |
 | Profile data | `/srv/data/hermes/profiles/<profile>` on the host |
-| Published ports | Only `9119` (built-in dashboard). The API port `8642` is reachable **only inside `proxy-net`** |
+| Published ports | Only `9119` (built-in dashboard). The API port `8642` is reachable **only inside `proxy-net`**, and only once `API_SERVER_HOST=0.0.0.0` is set (Hermes defaults to loopback — see `docs/operator-tasks.md` § 0.2b) |
 
 ### Monitored profiles
 
@@ -490,6 +490,15 @@ uses `~/.hermes/.env`):
 API_SERVER_ENABLED=true
 API_SERVER_KEY=<unique key per profile>
 ```
+
+Additionally, in the `default` profile's `.env` only (single multiplexed listener):
+
+```
+API_SERVER_HOST=0.0.0.0
+```
+
+Without it the server binds to loopback inside the container and no other
+container — including the BFF — can reach it.
 
 Do not set `API_SERVER_CORS_ORIGINS`. The BFF calls server-to-server, so CORS is
 not needed and enabling it only widens the attack surface.
