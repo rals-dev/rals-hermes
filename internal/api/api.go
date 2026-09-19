@@ -92,6 +92,9 @@ func NewHandler(d Deps) http.Handler {
 	r.handle("GET /api/overview", auth(h.overview))
 	r.handle("GET /api/agents", auth(h.agents))
 	r.handle("GET /api/agents/{profile}", auth(h.agentDetail))
+	r.handle("GET /api/agents/{profile}/sessions", auth(h.listSessions))
+	r.handle("GET /api/agents/{profile}/sessions/{id}", auth(h.sessionDetail))
+	r.handle("GET /api/agents/{profile}/runs/{run_id}", auth(h.run))
 	return requestLog(d.Logger, h.metrics, r)
 }
 
