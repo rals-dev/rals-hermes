@@ -57,10 +57,11 @@ type agentsResponse struct {
 	Agents      []agentCard `json:"agents"`
 }
 
-// probeResult is one profile's health fetch.
+// probeResult is one profile's health fetch. err is set when health is nil.
 type probeResult struct {
 	card   agentCard
 	health *hermes.HealthDetailed
+	err    error
 }
 
 func (h *handlers) overview(w http.ResponseWriter, r *http.Request) {
@@ -115,7 +116,7 @@ func (h *handlers) probe(ctx context.Context, c *hermes.Client) probeResult {
 		}
 		_, body := mapError(err, "not_found")
 		card.Error = &body
-		return probeResult{card: card}
+		return probeResult{card: card, err: err}
 	}
 	card.Status = statusDegraded
 	if health.Status == "ok" && health.Readiness.Status == "ok" {

@@ -23,9 +23,15 @@ func newRouter() *router {
 }
 
 // handle registers pattern ("METHOD /path") and, once per path, a
-// method-agnostic fallback that returns 405.
+// method-agnostic fallback that returns 405. The wrapper records the matched
+// pattern and {profile} value for the access log and metrics.
 func (r *router) handle(pattern string, h http.HandlerFunc) {
-	r.ServeMux.HandleFunc(pattern, h)
+	r.ServeMux.HandleFunc(pattern, func(w http.ResponseWriter, req *http.Request) {
+		info := infoFrom(req.Context())
+		info.route = pattern
+		info.profile = req.PathValue("profile")
+		h(w, req)
+	})
 	_, path, ok := strings.Cut(pattern, " ")
 	if !ok {
 		return

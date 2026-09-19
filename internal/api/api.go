@@ -77,7 +77,8 @@ func NewHandler(d Deps) http.Handler {
 	auth := h.sessions.require
 	r.handle("GET /api/overview", auth(h.overview))
 	r.handle("GET /api/agents", auth(h.agents))
-	return r
+	r.handle("GET /api/agents/{profile}", auth(h.agentDetail))
+	return requestLog(d.Logger, r)
 }
 
 func healthz(version string) http.HandlerFunc {

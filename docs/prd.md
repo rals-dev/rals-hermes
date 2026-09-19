@@ -448,6 +448,7 @@ commit per ticket straight to `main`, test-first (ADR-019).
 | T-107 | Error taxonomy and upstream mapping | Every row of the taxonomy table has a test |
 | T-108 | `/metrics` (moved from T-401) | Upstream latency per profile, error ratio, active-runs gauge, cache hit ratio, poller subscriber gauge |
 | T-109 | Structured JSON logs (moved from T-402) | One line per request with `profile`, `path`, `status`, `duration_ms`; no credentials; key-redaction test |
+| T-110 | `GET /api/agents/{profile}` (in the § 5 contract, missing from the original backlog) | Health card + capabilities, toolsets, models, skills; a failing optional section becomes `null` plus a `warnings` entry instead of failing the page |
 
 ### M2 — Sessions, runs, feed, jobs
 
