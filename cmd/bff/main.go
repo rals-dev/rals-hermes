@@ -17,6 +17,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/rals-dev/rals-hermes/internal/activity"
 	"github.com/rals-dev/rals-hermes/internal/api"
 	"github.com/rals-dev/rals-hermes/internal/config"
 	"github.com/rals-dev/rals-hermes/internal/hermes"
@@ -84,6 +85,12 @@ func run() error {
 		AuthKey:    cfg.Auth.Key,
 		SessionTTL: cfg.Auth.SessionTTL,
 		Metrics:    metrics,
+		Activity: activity.Config{
+			PollInterval:  cfg.Activity.PollInterval,
+			Window:        cfg.Activity.Window,
+			MaxSessions:   cfg.Activity.MaxSessionsPerProfile,
+			IdleStopAfter: cfg.Activity.IdleStopAfter,
+		},
 	})
 	err = server.Run(ctx, ln, handler, server.Options{
 		Logger:          logger,

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/rals-dev/rals-hermes/internal/activity"
 	"github.com/rals-dev/rals-hermes/internal/cache"
 	"github.com/rals-dev/rals-hermes/internal/config"
 	"github.com/rals-dev/rals-hermes/internal/hermes"
@@ -30,6 +31,11 @@ type Deps struct {
 
 	// Metrics is optional; when nil, /metrics is not served.
 	Metrics *observ.Metrics
+	// Activity bounds the session poller behind /activity/stream.
+	Activity activity.Config
+	// StreamKeepalive is how often BFF-generated streams send a comment
+	// line while idle. Zero means 15 s.
+	StreamKeepalive time.Duration
 
 	// now overrides the clock in tests.
 	now func() time.Time
@@ -37,13 +43,15 @@ type Deps struct {
 
 // handlers holds the per-process state behind the routes.
 type handlers struct {
-	log      *slog.Logger
-	version  string
-	profiles []*hermes.Client
-	byName   map[string]*hermes.Client
-	health   *cache.Cache[*hermes.HealthDetailed]
-	sessions *sessions
-	metrics  *observ.Metrics
+	log       *slog.Logger
+	version   string
+	profiles  []*hermes.Client
+	byName    map[string]*hermes.Client
+	health    *cache.Cache[*hermes.HealthDetailed]
+	sessions  *sessions
+	metrics   *observ.Metrics
+	activity  *activity.Hub
+	keepalive time.Duration
 }
 
 // NewHandler builds the root handler with all routes registered.
@@ -60,17 +68,27 @@ func NewHandler(d Deps) http.Handler {
 	if d.now == nil {
 		d.now = time.Now
 	}
+	if d.StreamKeepalive <= 0 {
+		d.StreamKeepalive = 15 * time.Second
+	}
+	sources := make([]activity.Source, 0, len(d.Profiles))
+	for _, c := range d.Profiles {
+		sources = append(sources, c)
+	}
 	h := &handlers{
-		log:      d.Logger,
-		version:  d.Version,
-		profiles: d.Profiles,
-		byName:   make(map[string]*hermes.Client, len(d.Profiles)),
-		health:   cache.New[*hermes.HealthDetailed](d.CacheTTL),
-		sessions: newSessions(d.AuthKey, d.SessionTTL, d.now),
-		metrics:  d.Metrics,
+		log:       d.Logger,
+		version:   d.Version,
+		profiles:  d.Profiles,
+		byName:    make(map[string]*hermes.Client, len(d.Profiles)),
+		health:    cache.New[*hermes.HealthDetailed](d.CacheTTL),
+		sessions:  newSessions(d.AuthKey, d.SessionTTL, d.now),
+		metrics:   d.Metrics,
+		activity:  activity.NewHub(d.Activity, sources, d.Logger),
+		keepalive: d.StreamKeepalive,
 	}
 	if h.metrics != nil {
 		h.metrics.RegisterCache("health", h.health.Stats)
+		h.activity.SetGauge(h.metrics)
 	}
 	for _, c := range d.Profiles {
 		h.byName[c.Name()] = c
@@ -96,6 +114,7 @@ func NewHandler(d Deps) http.Handler {
 	r.handle("GET /api/agents/{profile}/sessions/{id}", auth(h.sessionDetail))
 	r.handle("GET /api/agents/{profile}/runs/{run_id}", auth(h.run))
 	r.handle("GET /api/agents/{profile}/runs/{run_id}/stream", auth(h.runStream))
+	r.handle("GET /api/agents/{profile}/activity/stream", auth(h.activityStream))
 	return requestLog(d.Logger, h.metrics, r)
 }
 
