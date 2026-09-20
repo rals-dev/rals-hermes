@@ -5,6 +5,7 @@ export const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/', name: 'overview', component: () => import('@/pages/OverviewPage.vue') },
+    { path: '/floor', name: 'floor', component: () => import('@/pages/FloorPage.vue') },
     { path: '/login', name: 'login', component: () => import('@/pages/LoginPage.vue'), meta: { public: true } },
     { path: '/agents/:profile', name: 'agent', component: () => import('@/pages/AgentPage.vue'), props: true },
     { path: '/agents/:profile/sessions/:id', name: 'session', component: () => import('@/pages/SessionPage.vue'), props: true },
