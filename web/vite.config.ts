@@ -17,7 +17,9 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    emptyOutDir: true,
+    // dist/.gitkeep must survive so `go:embed all:dist` compiles without a
+    // frontend build; the build script clears dist/assets itself.
+    emptyOutDir: false,
     sourcemap: false,
   },
   test: {
