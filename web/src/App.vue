@@ -14,16 +14,24 @@ async function logout() {
     void router.replace({ name: 'login' })
   }
 }
+
+const navClass = (name: string) =>
+  route.name === name
+    ? 'text-ink border-amber'
+    : 'text-muted border-transparent hover:text-ink'
 </script>
 
 <template>
   <div class="min-h-dvh flex flex-col">
-    <header v-if="!isLogin" class="border-b border-line bg-surface">
-      <div class="mx-auto flex max-w-7xl items-center gap-6 px-4 py-2.5">
-        <RouterLink to="/" class="whitespace-nowrap font-semibold tracking-tight no-underline">Hermes agents</RouterLink>
-        <nav aria-label="Primary" class="flex items-center gap-4 text-muted">
-          <RouterLink to="/" class="no-underline hover:text-ink" :class="{ 'text-ink': route.name === 'overview' }">Overview</RouterLink>
-          <RouterLink to="/jobs" class="no-underline hover:text-ink" :class="{ 'text-ink': route.name === 'jobs' }">Scheduled jobs</RouterLink>
+    <header v-if="!isLogin" class="border-b border-line bg-panel">
+      <div class="mx-auto flex max-w-7xl items-stretch gap-6 px-4">
+        <RouterLink to="/" class="flex items-center gap-2 py-2.5 font-bold tracking-tight no-underline">
+          <span class="lamp bg-amber" aria-hidden="true" />
+          <span class="whitespace-nowrap">Hermes agents</span>
+        </RouterLink>
+        <nav aria-label="Primary" class="flex items-stretch gap-5">
+          <RouterLink to="/" class="flex items-center border-b-2 no-underline transition-colors" :class="navClass('overview')">Overview</RouterLink>
+          <RouterLink to="/jobs" class="flex items-center border-b-2 no-underline transition-colors" :class="navClass('jobs')">Scheduled jobs</RouterLink>
         </nav>
         <button type="button" class="ml-auto text-muted hover:text-ink" @click="logout">Sign out</button>
       </div>

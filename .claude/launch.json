@@ -5,6 +5,7 @@
       "name": "web-dev",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev", "--prefix", "web", "--", "--port", "5173", "--strictPort"],
+      "env": { "VITE_API_TARGET": "http://dashboard.srv01-rals.taila2af30.ts.net" },
       "port": 5173
     }
   ]

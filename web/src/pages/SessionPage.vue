@@ -27,22 +27,22 @@ const total = computed(() => s.value?.message_count ?? 0)
 <template>
   <div class="space-y-5">
     <nav aria-label="Breadcrumb" class="text-muted">
-      <RouterLink to="/" class="no-underline hover:underline">Overview</RouterLink> /
-      <RouterLink :to="{ name: 'agent', params: { profile } }" class="no-underline hover:underline">{{ profile }}</RouterLink>
+      <RouterLink to="/" class="no-underline hover:text-amber hover:underline">Overview</RouterLink> /
+      <RouterLink :to="{ name: 'agent', params: { profile } }" class="no-underline hover:text-amber hover:underline">{{ profile }}</RouterLink>
     </nav>
 
     <Skeleton v-if="q.isPending.value" :rows="4" label="Loading session" />
     <ErrorState v-else-if="q.isError.value" :error="q.error.value" :retry="() => q.refetch()" />
     <template v-else-if="q.data.value && s">
       <header>
-        <h1 class="text-lg font-semibold tracking-tight">{{ s.title || 'Untitled session' }}</h1>
+        <h1 class="text-lg font-bold tracking-tight">{{ s.title || 'Untitled session' }}</h1>
         <p class="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-muted">
           <span class="font-mono text-[12px]">{{ s.id }}</span>
           <span>{{ s.source }}</span>
           <span>{{ s.model }}</span>
           <span v-if="s.open" class="text-ok">open · last active {{ relativeTime(s.last_active) }}</span>
           <span v-else>ended {{ relativeTime(s.ended_at) }} · {{ s.end_reason }}</span>
-          <span v-if="s.parent_session_id">child of <RouterLink :to="{ name: 'session', params: { profile, id: s.parent_session_id } }" class="hover:underline">{{ s.parent_session_id }}</RouterLink></span>
+          <span v-if="s.parent_session_id">child of <RouterLink :to="{ name: 'session', params: { profile, id: s.parent_session_id } }" class="hover:text-amber hover:underline">{{ s.parent_session_id }}</RouterLink></span>
         </p>
         <dl class="mt-3 grid grid-cols-2 gap-x-6 gap-y-1 sm:grid-cols-4">
           <div><dt class="text-faint">Messages</dt><dd class="tabular">{{ s.message_count }}</dd></div>
@@ -54,7 +54,7 @@ const total = computed(() => s.value?.message_count ?? 0)
 
       <section aria-label="Messages">
         <header class="flex items-baseline justify-between pb-2">
-          <h2 class="font-medium">Messages</h2>
+          <h2 class="font-bold">Messages</h2>
           <span class="text-faint">Previews are what Hermes stores; secrets are redacted upstream.</span>
         </header>
         <MessageTimeline :messages="q.data.value.messages.data" />

@@ -29,25 +29,30 @@ async function submit() {
 
 <template>
   <div class="mx-auto mt-[12vh] max-w-sm">
-    <h1 class="text-xl font-semibold tracking-tight">Hermes agents</h1>
-    <p class="mt-1 text-muted">Enter the dashboard key to open a session. It stays in a cookie on this browser, never in the page.</p>
-    <form class="mt-6 space-y-3" @submit.prevent="submit">
-      <label class="block">
-        <span class="text-muted">Dashboard key</span>
-        <input
-          v-model="key"
-          type="password"
-          name="key"
-          autocomplete="current-password"
-          required
-          autofocus
-          class="mt-1 w-full rounded border border-line bg-surface px-3 py-2 text-ink"
-        />
-      </label>
-      <p v-if="error" role="alert" class="text-bad">{{ error }}</p>
-      <button type="submit" :disabled="busy || !key" class="w-full rounded bg-accent px-3 py-2 font-medium text-white disabled:opacity-60">
-        {{ busy ? 'Opening…' : 'Open dashboard' }}
-      </button>
-    </form>
+    <div class="panel px-5 py-5">
+      <h1 class="flex items-center gap-2 text-lg font-bold tracking-tight">
+        <span class="lamp bg-amber" aria-hidden="true" />
+        Hermes agents
+      </h1>
+      <p class="mt-1 text-muted">Enter the dashboard key to open a session. It stays in a cookie on this browser, never in the page.</p>
+      <form class="mt-5 space-y-3" @submit.prevent="submit">
+        <label class="block">
+          <span class="text-muted">Dashboard key</span>
+          <input
+            v-model="key"
+            type="password"
+            name="key"
+            autocomplete="current-password"
+            required
+            autofocus
+            class="mt-1 w-full rounded border border-line-strong bg-bg px-3 py-2 font-mono text-ink"
+          />
+        </label>
+        <p v-if="error" role="alert" class="text-bad">{{ error }}</p>
+        <button type="submit" :disabled="busy || !key" class="w-full rounded bg-amber px-3 py-2 font-bold text-amber-ink transition-opacity disabled:opacity-50">
+          {{ busy ? 'Opening…' : 'Open dashboard' }}
+        </button>
+      </form>
+    </div>
   </div>
 </template>

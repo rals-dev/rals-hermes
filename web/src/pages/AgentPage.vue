@@ -33,7 +33,7 @@ const enabledToolsets = computed(() => detail.data.value?.toolsets.filter((t) =>
 <template>
   <div class="space-y-6">
     <header class="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-      <h1 class="text-lg font-semibold tracking-tight">{{ profile }}</h1>
+      <h1 class="text-lg font-bold tracking-tight">{{ profile }}</h1>
       <template v-if="detail.data.value">
         <StatusWord :status="detail.data.value.status" />
         <span v-if="detail.data.value.model" class="text-muted">model {{ detail.data.value.model }}</span>
@@ -48,7 +48,7 @@ const enabledToolsets = computed(() => detail.data.value?.toolsets.filter((t) =>
       <div class="space-y-6">
         <section aria-label="Sessions">
           <header class="flex items-baseline justify-between pb-2">
-            <h2 class="font-medium">Sessions</h2>
+            <h2 class="font-bold">Sessions</h2>
             <span class="text-faint">newest first</span>
           </header>
           <Skeleton v-if="sessions.isPending.value" :rows="5" label="Loading sessions" />
@@ -65,7 +65,7 @@ const enabledToolsets = computed(() => detail.data.value?.toolsets.filter((t) =>
         </section>
 
         <section v-if="detail.data.value" aria-label="Toolsets">
-          <h2 class="pb-2 font-medium">Toolsets</h2>
+          <h2 class="pb-2 font-bold">Toolsets</h2>
           <ul role="list" class="grid gap-x-6 gap-y-1 sm:grid-cols-2">
             <li v-for="t in enabledToolsets" :key="t.name" class="flex justify-between gap-3 border-b border-line py-1">
               <span>{{ t.label }}</span>

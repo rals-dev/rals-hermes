@@ -17,7 +17,7 @@ const q = useQuery({
 
 <template>
   <div class="space-y-4">
-    <h1 class="text-lg font-semibold tracking-tight">Scheduled jobs</h1>
+    <h1 class="text-lg font-bold tracking-tight">Scheduled jobs</h1>
     <Skeleton v-if="q.isPending.value" :rows="3" label="Loading jobs" />
     <ErrorState v-else-if="q.isError.value" :error="q.error.value" :retry="() => q.refetch()" />
     <template v-else-if="q.data.value">
@@ -40,7 +40,7 @@ const q = useQuery({
           <tbody>
             <tr v-for="j in q.data.value.jobs" :key="j.profile + j.id" class="border-b border-line last:border-b-0">
               <td class="py-2 pr-3">
-                <div class="font-medium">{{ j.name }}</div>
+                <div class="font-bold">{{ j.name }}</div>
                 <div v-if="j.last_error" class="text-bad">{{ j.last_error }}</div>
               </td>
               <td class="py-2 pr-3 text-muted">{{ j.profile }}</td>

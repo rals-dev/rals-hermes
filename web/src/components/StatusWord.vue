@@ -2,23 +2,23 @@
 import { computed } from 'vue'
 import type { AgentStatus } from '@/api/types'
 
-// Status is spoken as a word beside a dot: colour reinforces, never carries.
-const props = defineProps<{ status: AgentStatus | string }>()
+// A lamp beside the word. The word carries the meaning; the lamp reinforces.
+const props = defineProps<{ status: AgentStatus | string; large?: boolean }>()
 
 const tone = computed(() => {
   switch (props.status) {
-    case 'healthy': case 'ok': case 'connected': case 'running': case 'completed': return 'bg-ok'
-    case 'degraded': case 'warn': case 'waiting_for_approval': case 'stopping': case 'blocked': return 'bg-warn'
+    case 'healthy': case 'ok': case 'connected': case 'running': case 'completed': case 'live': case 'open': return 'bg-ok'
+    case 'degraded': case 'warn': case 'waiting_for_approval': case 'stopping': case 'blocked': case 'reconnecting': return 'bg-warn'
     case 'unreachable': case 'failed': case 'error': case 'interrupted': return 'bg-bad'
     case 'unauthorized': return 'bg-auth'
-    default: return 'bg-faint'
+    default: return 'bg-lamp-off'
   }
 })
 </script>
 
 <template>
   <span class="inline-flex items-center gap-1.5">
-    <span class="inline-block size-2 rounded-full" :class="tone" aria-hidden="true" />
+    <span class="lamp" :class="[tone, { 'lamp-lg': large }]" aria-hidden="true" />
     <span>{{ status }}</span>
   </span>
 </template>

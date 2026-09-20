@@ -27,17 +27,18 @@ const busy = computed(() => (overview.data.value?.gateway?.active_agents ?? 0) >
 
       <div class="grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
         <section aria-label="Agents">
-          <header class="flex items-baseline justify-between pb-1">
-            <h1 class="text-lg font-semibold tracking-tight">
-              {{ busy ? 'An agent is working' : 'All agents idle' }}
+          <header class="flex items-baseline justify-between pb-2">
+            <h1 class="text-lg font-bold tracking-tight">
+              <span v-if="busy" class="text-amber">An agent is working</span>
+              <span v-else>All agents idle</span>
             </h1>
             <span class="text-faint">{{ overview.data.value.agents.length }} profiles</span>
           </header>
-          <ul role="list" class="divide-y divide-line border-y border-line">
+          <ul role="list" class="panel divide-y divide-line overflow-hidden">
             <AgentRow v-for="a in overview.data.value.agents" :key="a.profile" :agent="a" />
           </ul>
           <p class="mt-2 text-faint">
-            Reachability and key acceptance are per profile; the counters above are gateway-wide.
+            Reachability and key acceptance are per profile; the readouts above are gateway-wide.
           </p>
         </section>
 

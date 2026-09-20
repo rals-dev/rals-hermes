@@ -3,8 +3,11 @@ import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
 import { fileURLToPath, URL } from 'node:url'
 
-// In development the BFF runs on :8080 (make run); the dev server proxies
-// /api so cookies are same-origin, exactly as in production behind Traefik.
+// In development the dev server proxies /api to a BFF so cookies stay
+// same-origin, exactly as in production behind Traefik. Default is a local
+// `make run` on :8080; set VITE_API_TARGET to point at a deployed instance.
+const apiTarget = process.env.VITE_API_TARGET ?? 'http://127.0.0.1:8080'
+
 export default defineConfig({
   plugins: [vue(), tailwindcss()],
   resolve: {
@@ -12,7 +15,7 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/api': { target: 'http://127.0.0.1:8080', changeOrigin: false },
+      '/api': { target: apiTarget, changeOrigin: true },
     },
   },
   build: {

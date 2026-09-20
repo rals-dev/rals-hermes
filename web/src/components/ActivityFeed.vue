@@ -27,20 +27,20 @@ const link = computed(() => {
   if (s.some((v) => v === 'open')) return 'partly live'
   return s.includes('reconnecting') ? 'reconnecting' : 'connecting'
 })
-const linkTone = computed(() => (link.value === 'live' ? 'ok' : link.value === 'reconnecting' ? 'warn' : 'unknown'))
+const linkTone = computed(() => (link.value === 'live' ? 'live' : link.value === 'reconnecting' ? 'reconnecting' : 'unknown'))
 </script>
 
 <template>
-  <section :aria-label="title ?? 'Activity'" class="flex min-h-0 flex-col">
-    <header class="flex items-baseline justify-between pb-2">
-      <h2 class="font-medium">{{ title ?? 'Activity' }}</h2>
+  <section :aria-label="title ?? 'Activity'" class="panel flex min-h-0 flex-col px-4 py-3">
+    <header class="flex items-baseline justify-between">
+      <h2 class="font-bold">{{ title ?? 'Activity' }}</h2>
       <span class="text-muted"><StatusWord :status="linkTone" class="[&>span:last-child]:sr-only" /> {{ link }}</span>
     </header>
-    <p class="pb-2 text-faint">Tool calls and delegations as they happen, one poll interval behind. Previews are cut at 300 characters.</p>
-    <ul v-if="watched.length" role="list" aria-label="Sessions being watched" class="mb-3 flex flex-wrap gap-x-4 gap-y-1 border-y border-line py-2 text-muted">
+    <p class="pt-1 pb-2 text-faint">Tool calls and delegations as they happen, one poll interval behind. Previews are cut at 300 characters.</p>
+    <ul v-if="watched.length" role="list" aria-label="Sessions being watched" class="mb-2 flex flex-wrap gap-x-4 gap-y-1 border-y border-line py-2 text-muted">
       <li v-for="s in watched" :key="s.profile + s.id" class="flex items-baseline gap-1.5">
-        <span class="inline-block size-1.5 rounded-full" :class="s.open ? 'bg-ok' : 'bg-faint'" aria-hidden="true" />
-        <RouterLink :to="{ name: 'session', params: { profile: s.profile, id: s.id } }" class="no-underline hover:underline">
+        <span class="lamp !h-2 !w-2" :class="s.open ? 'bg-ok' : 'bg-lamp-off'" aria-hidden="true" />
+        <RouterLink :to="{ name: 'session', params: { profile: s.profile, id: s.id } }" class="no-underline hover:text-amber">
           <span v-if="profiles.length > 1" class="text-ink">{{ s.profile }}</span>
           {{ s.title || shortId(s.id) }}
         </RouterLink>
@@ -48,7 +48,7 @@ const linkTone = computed(() => (link.value === 'live' ? 'ok' : link.value === '
       </li>
     </ul>
     <EmptyState v-if="rows.length === 0" title="Nothing yet" detail="Events appear here when an agent runs a tool, replies, or delegates." />
-    <ul v-else role="list" aria-live="polite" aria-relevant="additions" class="overflow-y-auto">
+    <ul v-else role="list" aria-live="polite" aria-relevant="additions" class="-ml-1 overflow-y-auto">
       <FeedRow v-for="row in rows" :key="row.key" :row="row" :show-profile="profiles.length > 1" :fresh="fresh.has(row.key)" :now="now" />
     </ul>
   </section>

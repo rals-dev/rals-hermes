@@ -11,7 +11,7 @@ defineProps<{ profile: string; sessions: Session[] }>()
     <table class="w-full border-collapse text-left">
       <thead class="text-muted">
         <tr class="border-b border-line">
-          <th scope="col" class="py-1.5 pr-3 font-normal">Session</th>
+          <th scope="col" class="min-w-[14rem] py-1.5 pr-3 font-normal">Session</th>
           <th scope="col" class="py-1.5 pr-3 font-normal">Source</th>
           <th scope="col" class="py-1.5 pr-3 font-normal">State</th>
           <th scope="col" class="py-1.5 pr-3 font-normal">Last active</th>
@@ -23,8 +23,8 @@ defineProps<{ profile: string; sessions: Session[] }>()
       <tbody>
         <tr v-for="s in sessions" :key="s.id" class="border-b border-line align-top last:border-b-0">
           <td class="py-2 pr-3">
-            <RouterLink :to="{ name: 'session', params: { profile, id: s.id } }" class="no-underline hover:underline">
-              <span class="font-medium">{{ s.title || shortId(s.id) }}</span>
+            <RouterLink :to="{ name: 'session', params: { profile, id: s.id } }" class="no-underline hover:text-amber hover:underline">
+              <span class="font-bold">{{ s.title || shortId(s.id) }}</span>
             </RouterLink>
             <div v-if="s.title" class="text-faint tabular">{{ shortId(s.id) }}</div>
             <div v-if="s.parent_session_id" class="text-faint">child of {{ shortId(s.parent_session_id) }}</div>

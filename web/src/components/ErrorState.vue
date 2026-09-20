@@ -20,9 +20,9 @@ const d = describe(props.error)
 </script>
 
 <template>
-  <div role="alert" class="rounded border border-bad/40 bg-surface px-4 py-3">
-    <p class="font-medium">{{ d.title }}</p>
+  <div role="alert" class="panel border-l-4 !border-l-bad px-4 py-3">
+    <p class="font-bold">{{ d.title }}</p>
     <p class="text-muted">{{ d.detail }}</p>
-    <button v-if="retry" type="button" class="mt-2 text-accent hover:underline" @click="retry">Try again</button>
+    <button v-if="retry" type="button" class="mt-2 text-amber hover:text-amber hover:underline" @click="retry">Try again</button>
   </div>
 </template>

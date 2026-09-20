@@ -20,7 +20,7 @@ function label(m: Message): string {
         <div>#{{ m.id }}</div>
       </div>
       <div class="min-w-0">
-        <div class="font-medium" :class="{ 'text-muted': m.role === 'user' }">{{ label(m) }}</div>
+        <div class="font-bold" :class="{ 'text-muted': m.role === 'user' }">{{ label(m) }}</div>
         <template v-if="m.tool_calls?.length">
           <Clamp v-for="c in m.tool_calls" :key="c.id" :text="c.function.arguments" mono />
         </template>
