@@ -58,7 +58,7 @@ docs/               PRD, ADRs, findings, operator checklist, runbook
 
 ## Running locally
 
-Requirements: Go 1.26+, Node 24+ (frontend), `jq` (fixture script only).
+Requirements: Go 1.27+, Node 24+ (frontend), `jq` (fixture script only).
 
 ```
 cp config.example.yaml config.yaml          # base_url points at a tunnel to Hermes

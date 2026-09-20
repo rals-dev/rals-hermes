@@ -4,7 +4,22 @@ on:
   push:
     branches: [main]
     tags: ["v*"]
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+      - "deploy/grafana/**"
+      - "deploy/prometheus/**"
+      - "deploy/alloy/**"
+      - "deploy/traefik/**"
   pull_request:
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+
+# A newer push to the same branch supersedes an in-flight run.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref_type != 'tag' }}
 
 permissions:
   contents: read
@@ -24,6 +39,8 @@ jobs:
         uses: golangci/golangci-lint-action@v8
         with:
           version: latest
+      - name: vulnerabilities (govulncheck)
+        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
       - name: test (race)
         run: go test -race -count=1 -coverprofile=coverage.out ./...
       - name: build
