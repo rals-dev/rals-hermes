@@ -34,10 +34,15 @@ Requirements: Go 1.26+, Node 24+ (frontend only), `jq` (fixtures only).
 ```
 cp config.example.yaml config.yaml          # point base_url at your tunnel or stack
 export BFF_API_KEY=... HERMES_KEY_DEFAULT=... HERMES_KEY_CODER=... HERMES_KEY_TESTER=... HERMES_KEY_PRODUCT=...
-make test     # go test -race ./...
+make test     # pure-Go tests (CGO_ENABLED=0)
+make test-race # with the race detector (needs a C toolchain)
 make lint     # golangci-lint run
-make run      # go run ./cmd/bff  → http://127.0.0.1:8080/healthz
+make run      # CGO_ENABLED=0 go run ./cmd/bff → http://127.0.0.1:8080/healthz
 ```
+
+The binary is always built with `CGO_ENABLED=0`: the production image is
+static, and on macOS it also sidesteps SDK/Command Line Tools mismatches in
+the system linker.
 
 The process refuses to start if any referenced environment variable is
 empty. `LOG_LEVEL` (debug|info|warn|error) controls verbosity; all logs are

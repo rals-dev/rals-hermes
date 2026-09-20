@@ -3,6 +3,7 @@ package observ
 import (
 	"net/http"
 	"net/http/httptest"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -85,5 +86,11 @@ func TestMetrics_CacheStatsAreReadLazily(t *testing.T) {
 }
 
 func TestMetrics_GoRuntimeMetricsArePresent(t *testing.T) {
-	mustContain(t, scrape(t, New()), "go_goroutines", "process_resident_memory_bytes")
+	body := scrape(t, New())
+	mustContain(t, body, "go_goroutines")
+	// The process collector reads /proc on Linux; on Darwin it needs cgo,
+	// which pure-Go builds (the production configuration) do not have.
+	if runtime.GOOS == "linux" {
+		mustContain(t, body, "process_resident_memory_bytes")
+	}
 }
