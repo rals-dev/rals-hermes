@@ -196,23 +196,13 @@ so the server can `docker compose pull` without a token.
 
 ## M4 — Deployment (do not start before M3 is merged)
 
-### 4.1 Add a LAN entrypoint to Traefik with an IP allow-list
+### 4.1 Traefik — nothing to change
 
-Why: Prometheus/Alloy live on `svrdocker`, which is NOT on the tailnet. They
-reach `srv01-rals` over the LAN (`eno1`, `<lan-ip>`). Traefik currently
-listens only on `127.0.0.1:80` and the Tailscale IP. Decision #8.
+Prometheus runs on this host (4.4), so the dashboard only needs its own
+labels on the existing `web` entrypoint. `deploy/traefik/README.md` keeps the
+LAN-entrypoint variant in case scraping ever has to come from another host.
 
-Follow `deploy/traefik/README.md`: add entrypoint `metrics` (`:9100`) to
-`traefik.yaml` and the port mapping `<lan-ip>:9100:9100` to the Traefik
-compose file, then `docker compose up -d` in `/srv/stacks/traefik/`.
-Verify after 4.2:
-
-```
-svrdocker$ curl -s http://<lan-ip>:9100/metrics | head -5
-other-host$ curl -s -o /dev/null -w '%{http_code}\n' http://<lan-ip>:9100/metrics   # expect 403
-```
-
-- [ ] Done
+- [ ] Read and skipped
 
 ### 4.2 Deploy the `hermes-dashboard` stack
 
@@ -245,18 +235,18 @@ Verify in Grafana Explore: `{container="hermes-dashboard"}` returns JSON lines.
 
 - [ ] Done
 
-### 4.4 Register the scrape job in Prometheus on `svrdocker`
+### 4.4 Deploy the `prometheus` stack on this host
 
-Add to the Prometheus config (or Alloy scrape config) on `svrdocker`:
-
-```yaml
-- job_name: hermes-bff
-  scrape_interval: 15s
-  static_configs:
-    - targets: ['<lan-ip>:9100']
+```
+srv01$ mkdir -p /srv/stacks/prometheus && cd /srv/stacks/prometheus
+# copy deploy/prometheus/compose.yaml, prometheus.yml and .env.example → .env
+# set PROM_BIND=<lan-ip> so Grafana on svrdocker can reach it
+srv01$ docker compose up -d
+srv01$ docker exec prometheus wget -qO- 'http://127.0.0.1:9090/api/v1/targets' | grep -o '"health":"[a-z]*"'
 ```
 
-Reload Prometheus, then check Status → Targets shows `hermes-bff` as UP.
+Expected: `"health":"up"` for both targets. Then in Grafana on `svrdocker`:
+Connections → Data sources → Add Prometheus, URL `http://<lan-ip>:9090`.
 
 - [ ] Done
 

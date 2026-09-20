@@ -1,0 +1,46 @@
+# Prometheus on srv01-rals (ADR-008 addendum). Joins proxy-net so it scrapes
+# the dashboard over the container network — no LAN entrypoint on Traefik,
+# no allow-list. Grafana (on svrdocker) reads it as a data source over the
+# LAN through the single published port.
+#
+# Stack lives at /srv/stacks/prometheus/ with prometheus.yml and .env.
+
+services:
+  prometheus:
+    image: prom/prometheus:v3.6.0
+    container_name: prometheus
+    restart: unless-stopped
+    user: "65534:65534"
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=${PROM_RETENTION_TIME:-30d}
+      - --storage.tsdb.retention.size=${PROM_RETENTION_SIZE:-2GB}
+      - --web.enable-lifecycle
+      - --web.external-url=http://${PROM_BIND:-127.0.0.1}:9090/
+    ports:
+      # Bind to the LAN address so Grafana on svrdocker can reach it; keep
+      # it off the Tailscale IP unless you also want to browse it yourself.
+      - "${PROM_BIND:-127.0.0.1}:9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    networks:
+      - proxy-net
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:9090/-/healthy"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  prometheus-data:
+
+networks:
+  proxy-net:
+    external: true

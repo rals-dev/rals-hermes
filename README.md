@@ -125,8 +125,8 @@ failures are classified (`upstream_unreachable`, `upstream_unauthorized`,
 ## Deployment
 
 Images are built by GitHub Actions and published to `ghcr.io/<owner>/rals-hermes`
-(`:latest`, `:<sha>`, `:<tag>`). The compose stack, the Traefik entrypoint
-change, the Alloy stack and the Grafana dashboard are under `deploy/`; the
+(`:latest`, `:<sha>`, `:<tag>`). The compose stacks (dashboard, Prometheus,
+Alloy) and the Grafana dashboard are under `deploy/`; the
 step-by-step procedure for the host is [`docs/runbook.md`](docs/runbook.md).
 
 ## Security model
@@ -138,8 +138,8 @@ step-by-step procedure for the host is [`docs/runbook.md`](docs/runbook.md).
 - Browser auth: a single dashboard key exchanged once for a random
   `HttpOnly; SameSite=Strict` cookie; failed logins are rate-limited.
 - Network: reachable only through Traefik on a Tailscale network; the BFF
-  port is not published; `/metrics` is served on a LAN entrypoint restricted
-  to the Prometheus host by IP.
+  port is not published; `/metrics` is not routed by Traefik at all —
+  Prometheus scrapes it over the container network.
 - Container: distroless, non-root, read-only filesystem, no capabilities.
 
 ## License

@@ -477,7 +477,7 @@ commit per ticket straight to `main`, test-first (ADR-019).
 | T-401 | Multi-stage Dockerfile (Node build → Go build → distroless) | **Done** (13 MB) — Final image < 30 MB; non-root user; `linux/amd64` |
 | T-402 | GitHub Actions: vet, lint, test, build, push to GHCR | **Done** — Green on `main`; image tagged by SHA and `latest` |
 | T-403 | Compose stack `hermes-dashboard` on `proxy-net` with Traefik labels | **Done** (deploy/hermes-dashboard) — Reachable over Tailscale; BFF port not published; resource limits set |
-| T-404 | Traefik LAN entrypoint + `IPAllowList` patch for `/metrics` (ADR-008) | **Written** (deploy/traefik) — operator applies — `deploy/traefik/` documented; `svrdocker` scrapes successfully; other LAN hosts get 403 |
+| T-404 (superseded) | Traefik LAN entrypoint + `IPAllowList` patch for `/metrics` (ADR-008) | **Written** (deploy/traefik) — operator applies — `deploy/traefik/` documented; `svrdocker` scrapes successfully; other LAN hosts get 403 |
 | T-405 | Separate `alloy` stack (ADR-009) | **Written** (deploy/alloy) — operator applies — `deploy/alloy/`; BFF JSON logs visible in Loki |
 | T-406 | Grafana dashboard JSON | **Done** — `deploy/grafana/hermes-bff.json` in repo |
 | T-407 | README + operator runbook | **Done** — A new engineer can run locally from the README alone; "tested against Hermes digest …" line present |

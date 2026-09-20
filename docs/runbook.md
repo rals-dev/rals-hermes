@@ -7,8 +7,7 @@ repository owner).
 
 ## 1. First deployment
 
-1. Traefik: apply `deploy/traefik/README.md` (entrypoint `metrics` on
-   `<lan-ip>:9100`) and `docker compose up -d` in `/srv/stacks/traefik/`.
+1. Traefik: nothing to change (see `deploy/traefik/README.md`).
 2. Dashboard stack:
    ```
    mkdir -p /srv/stacks/hermes-dashboard && cd /srv/stacks/hermes-dashboard
@@ -26,8 +25,11 @@ repository owner).
    `BFF_API_KEY`.
 4. Alloy stack (`/srv/stacks/alloy/`): copy `deploy/alloy/compose.yaml`,
    `config.alloy`, set `LOKI_URL` in `.env`, `docker compose up -d`.
-5. On `svrdocker`: add the Prometheus scrape job (target `<lan-ip>:9100`)
-   and import `deploy/grafana/hermes-bff.json`.
+5. Prometheus stack (`/srv/stacks/prometheus/`): copy
+   `deploy/prometheus/compose.yaml`, `prometheus.yml`, set `PROM_BIND=<lan-ip>`
+   in `.env`, `docker compose up -d`. In Grafana on `svrdocker` add
+   `http://<lan-ip>:9090` as a Prometheus data source and import
+   `deploy/grafana/hermes-bff.json`.
 
 ## 2. Upgrading the dashboard
 
@@ -79,7 +81,7 @@ Read the key values on the host with
 | One profile `unauthorized` | Its `API_SERVER_KEY` changed or was blanked | Compare `.env` on the host with the stack's `.env` |
 | Feed says `reconnecting` forever | Traefik buffering or the BFF restarted | `curl -N -b <cookie> http://<host>/api/agents/default/activity/stream` should print `: connected` immediately |
 | Feed replays old messages | Regression of ADR-018 | `go test ./internal/activity -run Reentering` |
-| `/metrics` 403 on svrdocker | Its IP is not in `METRICS_ALLOW_CIDR` | Traefik access log |
+| Prometheus target `hermes-bff` DOWN | Dashboard container not on `proxy-net` or renamed | `docker exec prometheus wget -qO- http://hermes-dashboard:8080/healthz` |
 | Login 429 | Five wrong keys within a minute from one address | Wait 60 s |
 | Start-up fails: `environment variable … is required but empty` | `.env` incomplete | Fill it; the message names the variable |
 

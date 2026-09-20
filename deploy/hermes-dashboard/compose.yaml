@@ -2,7 +2,8 @@
 # Lives at /srv/stacks/hermes-dashboard/ next to config.yaml and .env.
 #
 # Reachable only through Traefik on proxy-net; no port is published on the
-# host. /metrics is exposed on the separate LAN entrypoint (deploy/traefik).
+# host. /metrics is scraped by the local Prometheus stack over proxy-net and
+# is deliberately excluded from the Traefik router.
 
 services:
   bff:
@@ -38,18 +39,12 @@ services:
       - "logging=loki"
       - "traefik.enable=true"
       - "traefik.docker.network=proxy-net"
-      # UI + API on the Tailscale-facing entrypoint. /metrics is excluded
-      # here and served only on the LAN entrypoint below.
+      # UI + API on the Tailscale-facing entrypoint; /metrics is never
+      # routed by Traefik (Prometheus reaches the container directly).
       - "traefik.http.routers.hermes-dashboard.entrypoints=web"
       - "traefik.http.routers.hermes-dashboard.rule=Host(`${DASHBOARD_HOST}`) && !PathPrefix(`/metrics`)"
       - "traefik.http.routers.hermes-dashboard.service=hermes-dashboard"
       - "traefik.http.services.hermes-dashboard.loadbalancer.server.port=8080"
-      # Prometheus scrape path on the LAN entrypoint, allow-listed (ADR-008).
-      - "traefik.http.routers.hermes-metrics.entrypoints=metrics"
-      - "traefik.http.routers.hermes-metrics.rule=Path(`/metrics`)"
-      - "traefik.http.routers.hermes-metrics.middlewares=hermes-metrics-allow"
-      - "traefik.http.routers.hermes-metrics.service=hermes-dashboard"
-      - "traefik.http.middlewares.hermes-metrics-allow.ipallowlist.sourcerange=${METRICS_ALLOW_CIDR}"
 
 networks:
   proxy-net:

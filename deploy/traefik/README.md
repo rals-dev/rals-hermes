@@ -1,9 +1,28 @@
-# Traefik changes for the dashboard (ADR-008)
+# Traefik and the dashboard
 
-Two edits to the existing stack at `/srv/stacks/traefik/`. Nothing about the
-Tailscale-facing `web` entrypoint changes.
+With Prometheus running on this host (`deploy/prometheus/`), **no change to
+the Traefik stack is needed**: the dashboard registers itself through labels
+on the existing `web` entrypoint, and `/metrics` is scraped over `proxy-net`
+without passing through Traefik at all.
 
-## 1. `traefik.yaml` — add a LAN entrypoint for Prometheus
+| Entrypoint | Bound to | Router |
+| --- | --- | --- |
+| `web` | loopback + Tailscale IP, :80 | `hermes-dashboard`: `Host(DASHBOARD_HOST) && !PathPrefix(/metrics)` |
+
+Verify:
+
+```
+laptop-on-tailnet$ curl -s -o /dev/null -w '%{http_code}\n' http://<dashboard-host>/healthz   # 200
+laptop-on-tailnet$ curl -s -o /dev/null -w '%{http_code}\n' http://<dashboard-host>/metrics   # 404 (not routed)
+srv01$ docker exec prometheus wget -qO- http://hermes-dashboard:8080/metrics | head -3        # bff_* lines
+```
+
+## Alternative kept for reference: Prometheus on another LAN host
+
+If scraping must come from `svrdocker` instead, add a LAN-only entrypoint
+and an allow-listed router (this was ADR-008's original design):
+
+`traefik.yaml`:
 
 ```yaml
 entryPoints:
@@ -13,36 +32,14 @@ entryPoints:
     address: ":9100"
 ```
 
-## 2. `compose.yaml` — publish that entrypoint on the LAN address only
+Traefik `compose.yaml` ports: add `"<lan-ip>:9100:9100"`.
+
+Dashboard labels:
 
 ```yaml
-    ports:
-      - "127.0.0.1:80:80"
-      - "<tailscale-ip>:80:80"
-      - "127.0.0.1:8080:8080"
-      - "<lan-ip>:9100:9100"      # new: Prometheus on svrdocker scrapes here
-```
-
-Then:
-
-```
-cd /srv/stacks/traefik && docker compose up -d
-```
-
-## What is routed where
-
-| Entrypoint | Bound to | Routers |
-| --- | --- | --- |
-| `web` | loopback + Tailscale IP, :80 | `hermes-dashboard`: `Host(DASHBOARD_HOST) && !PathPrefix(/metrics)` |
-| `metrics` | LAN IP, :9100 | `hermes-metrics`: `Path(/metrics)` behind `ipallowlist` = `METRICS_ALLOW_CIDR` |
-
-The router labels live in `deploy/hermes-dashboard/compose.yaml`; only the
-entrypoint and the port mapping belong to the Traefik stack.
-
-## Verify
-
-```
-svrdocker$ curl -s http://<lan-ip>:9100/metrics | head -3        # 200, bff_* lines
-other-lan-host$ curl -s -o /dev/null -w '%{http_code}\n' http://<lan-ip>:9100/metrics   # 403
-laptop-on-tailnet$ curl -s -o /dev/null -w '%{http_code}\n' http://<dashboard-host>/metrics  # 404
+      - "traefik.http.routers.hermes-metrics.entrypoints=metrics"
+      - "traefik.http.routers.hermes-metrics.rule=Path(`/metrics`)"
+      - "traefik.http.routers.hermes-metrics.middlewares=hermes-metrics-allow"
+      - "traefik.http.routers.hermes-metrics.service=hermes-dashboard"
+      - "traefik.http.middlewares.hermes-metrics-allow.ipallowlist.sourcerange=<svrdocker-lan-ip>/32"
 ```
