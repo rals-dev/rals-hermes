@@ -199,38 +199,30 @@ so the server can `docker compose pull` without a token.
 ### 4.1 Add a LAN entrypoint to Traefik with an IP allow-list
 
 Why: Prometheus/Alloy live on `svrdocker`, which is NOT on the tailnet. They
-reach `srv01-rals` over the LAN. Traefik currently listens only on
-`127.0.0.1:80` and the Tailscale IP. Decision #8.
+reach `srv01-rals` over the LAN (`eno1`, `<lan-ip>`). Traefik currently
+listens only on `127.0.0.1:80` and the Tailscale IP. Decision #8.
 
-The exact patch will be provided in `deploy/traefik/` during M4. It adds:
-
-- an entrypoint bound to `<lan-ip>:80` (or a dedicated port),
-- a router for `/metrics` on that entrypoint only, with an `IPAllowList`
-  middleware restricted to `svrdocker`'s LAN IP,
-- no change to the existing Tailscale-facing routers.
-
-Apply with `docker compose up -d` in `/srv/stacks/traefik/` and verify:
+Follow `deploy/traefik/README.md`: add entrypoint `metrics` (`:9100`) to
+`traefik.yaml` and the port mapping `<lan-ip>:9100:9100` to the Traefik
+compose file, then `docker compose up -d` in `/srv/stacks/traefik/`.
+Verify after 4.2:
 
 ```
-svrdocker$ curl -s http://<srv01-lan-ip>/metrics | head -5
-other-host$ curl -s -o /dev/null -w '%{http_code}\n' http://<srv01-lan-ip>/metrics   # expect 403
+svrdocker$ curl -s http://<lan-ip>:9100/metrics | head -5
+other-host$ curl -s -o /dev/null -w '%{http_code}\n' http://<lan-ip>:9100/metrics   # expect 403
 ```
 
 - [ ] Done
 
 ### 4.2 Deploy the `hermes-dashboard` stack
 
-```
-srv01$ mkdir -p /srv/stacks/hermes-dashboard && cd /srv/stacks/hermes-dashboard
-# copy deploy/hermes-dashboard/compose.yaml and config.yaml from the repo
-# create .env from deploy/hermes-dashboard/.env.example with the five secrets:
-#   BFF_API_KEY, HERMES_KEY_DEFAULT, HERMES_KEY_CODER, HERMES_KEY_TESTER, HERMES_KEY_PRODUCT
-srv01$ docker compose pull && docker compose up -d
-srv01$ docker compose logs --tail=20 bff
-```
+See `docs/runbook.md` § 1 step 2. `.env` needs `IMAGE_OWNER`, `IMAGE_TAG`,
+`DASHBOARD_HOST` (pattern `hermes.srv01-rals.<tailnet>.ts.net`, like the
+existing Obsidian rule), `METRICS_ALLOW_CIDR` (`<svrdocker-lan-ip>/32`),
+`BFF_API_KEY`, and the four `HERMES_KEY_*` values.
 
-Verify: `http://<tailscale-ip>/` (or the Traefik host rule) shows the login
-page; `/healthz` returns 200.
+Verify: `http://<DASHBOARD_HOST>/` shows the login page; the container log
+shows `configuration loaded` with four profiles.
 
 - [ ] Done
 
@@ -247,7 +239,9 @@ srv01$ mkdir -p /srv/stacks/alloy && cd /srv/stacks/alloy
 srv01$ docker compose up -d
 ```
 
-Verify in Grafana Explore: `{container="hermes-dashboard-bff"}` returns JSON lines.
+Only containers labelled `logging=loki` are shipped (the dashboard sets it;
+add the label to the Hermes compose service if its logs are wanted).
+Verify in Grafana Explore: `{container="hermes-dashboard"}` returns JSON lines.
 
 - [ ] Done
 
@@ -259,7 +253,7 @@ Add to the Prometheus config (or Alloy scrape config) on `svrdocker`:
 - job_name: hermes-bff
   scrape_interval: 15s
   static_configs:
-    - targets: ['<srv01-lan-ip>:80']
+    - targets: ['<lan-ip>:9100']
 ```
 
 Reload Prometheus, then check Status → Targets shows `hermes-bff` as UP.
