@@ -432,56 +432,56 @@ commit per ticket straight to `main`, test-first (ADR-019).
 | T-002 | Confirm `API_SERVER_KEY` per profile incl. `product-agent` | **Done** — keys generated for the three named profiles; cross-profile key returns 401; `API_SERVER_HOST=0.0.0.0` set |
 | T-003 | `scripts/collect-fixtures.sh` + fixtures for 4 profiles × 14 endpoints, redacted | **Done** — `testdata/fixtures/`, findings in `docs/t003-findings.md`; Telegram work confirmed invisible to `/v1/runs` |
 | T-004 | Verify `/v1/capabilities` per profile | **Done** — identical feature map on all four profiles (fixtures); `skills_api: true` despite `/v1/skills` 500 |
-| T-005 | Rewrite this PRD, write ADRs, scaffold repo, `git init`, public GitHub repo | This document; `docs/decisions/`; CI skeleton green on an empty module |
+| T-005 | Rewrite this PRD, write ADRs, scaffold repo, `git init`, public GitHub repo | **Done** — This document; `docs/decisions/`; CI skeleton green on an empty module |
 | T-006 | Operator pins the Hermes image digest | Checklist 0.1 ticked |
 
 ### M1 — BFF core (+ observability from day one)
 
 | ID | Task | Acceptance criteria |
 | --- | --- | --- |
-| T-101 | Go scaffold: routing, config loader, structured logging, graceful shutdown | `go run ./cmd/bff` starts; `/healthz` returns 200; config validated at start; referenced env vars must be non-empty |
-| T-102 | Hermes client package: one instance per profile, bearer auth, per-profile timeout, **no automatic retries** | `httptest` unit tests; key never appears in logs or errors; base URL fully configurable |
-| T-103 | `GET /api/agents` | Returns configured profiles with summary status |
-| T-104 | `GET /api/overview` — parallel fan-out + aggregation | One dead profile does not fail the response; per-profile timeout enforced; tests cover mixed healthy/dead |
-| T-105 | TTL cache + `singleflight` | TTL configurable; cache hit does not call upstream; concurrent misses coalesce; tests prove both |
-| T-106 | Auth: `POST/DELETE /api/auth/session`, cookie middleware | Missing/invalid cookie → 401 `unauthorized`; `/healthz` and `/metrics` exempt; constant-time key compare; login rate-limited |
-| T-107 | Error taxonomy and upstream mapping | Every row of the taxonomy table has a test |
-| T-108 | `/metrics` (moved from T-401) | Upstream latency per profile, error ratio, active-runs gauge, cache hit ratio, poller subscriber gauge |
-| T-109 | Structured JSON logs (moved from T-402) | One line per request with `profile`, `path`, `status`, `duration_ms`; no credentials; key-redaction test |
-| T-110 | `GET /api/agents/{profile}` (in the § 5 contract, missing from the original backlog) | Health card + capabilities, toolsets, models, skills; a failing optional section becomes `null` plus a `warnings` entry instead of failing the page |
+| T-101 | Go scaffold: routing, config loader, structured logging, graceful shutdown | **Done** — `go run ./cmd/bff` starts; `/healthz` returns 200; config validated at start; referenced env vars must be non-empty |
+| T-102 | Hermes client package: one instance per profile, bearer auth, per-profile timeout, **no automatic retries** | **Done** — `httptest` unit tests; key never appears in logs or errors; base URL fully configurable |
+| T-103 | `GET /api/agents` | **Done** — Returns configured profiles with summary status |
+| T-104 | `GET /api/overview` — parallel fan-out + aggregation | **Done** — One dead profile does not fail the response; per-profile timeout enforced; tests cover mixed healthy/dead |
+| T-105 | TTL cache + `singleflight` | **Done** — TTL configurable; cache hit does not call upstream; concurrent misses coalesce; tests prove both |
+| T-106 | Auth: `POST/DELETE /api/auth/session`, cookie middleware | **Done** — Missing/invalid cookie → 401 `unauthorized`; `/healthz` and `/metrics` exempt; constant-time key compare; login rate-limited |
+| T-107 | Error taxonomy and upstream mapping | **Done** — Every row of the taxonomy table has a test |
+| T-108 | `/metrics` (moved from T-401) | **Done** — Upstream latency per profile, error ratio, active-runs gauge, cache hit ratio, poller subscriber gauge |
+| T-109 | Structured JSON logs (moved from T-402) | **Done** — One line per request with `profile`, `path`, `status`, `duration_ms`; no credentials; key-redaction test |
+| T-110 | `GET /api/agents/{profile}` (in the § 5 contract, missing from the original backlog) | **Done** — Health card + capabilities, toolsets, models, skills; a failing optional section becomes `null` plus a `warnings` entry instead of failing the page |
 
 ### M2 — Sessions, runs, feed, jobs
 
 | ID | Task | Acceptance criteria |
 | --- | --- | --- |
-| T-201 | `GET /api/agents/{profile}/sessions` with pagination passthrough | `limit`/`offset`/`source` forwarded; out-of-range values → 400 `bad_request` |
-| T-202 | `GET /api/agents/{profile}/sessions/{id}` + messages + usage | Metadata, messages, and token usage merged into one response |
-| T-203 | `GET /api/agents/{profile}/runs/{run_id}` | Upstream 404 → `run_not_found`, not 500 |
-| T-204 | SSE relay `/runs/{run_id}/stream` | Keepalive forwarded; upstream closed when client leaves; mid-stream failure becomes an `error` event; tested against a fake upstream |
-| T-205 | Session poller + `/activity/stream` (ADR-004/018) | Lazy start/stop; bounded sessions and cursors; events carry `profile` + `session_id`; tested with a fake upstream advancing over time |
-| T-206 | `GET /api/jobs` aggregated across profiles (was T-301) | Each job carries its `profile`; a dead profile does not fail the response |
+| T-201 | `GET /api/agents/{profile}/sessions` with pagination passthrough | **Done** — `limit`/`offset`/`source` forwarded; out-of-range values → 400 `bad_request` |
+| T-202 | `GET /api/agents/{profile}/sessions/{id}` + messages + usage | **Done** — Metadata, messages, and token usage merged into one response |
+| T-203 | `GET /api/agents/{profile}/runs/{run_id}` | **Done** — Upstream 404 → `run_not_found`, not 500 |
+| T-204 | SSE relay `/runs/{run_id}/stream` | **Done** — Keepalive forwarded; upstream closed when client leaves; mid-stream failure becomes an `error` event; tested against a fake upstream |
+| T-205 | Session poller + `/activity/stream` (ADR-004/018) | **Done** — Lazy start/stop; bounded sessions and cursors; events carry `profile` + `session_id`; tested with a fake upstream advancing over time |
+| T-206 | `GET /api/jobs` aggregated across profiles (was T-301) | **Done** — Each job carries its `profile`; a dead profile does not fail the response |
 
 ### M3 — Frontend (Vue 3)
 
 | ID | Task | Acceptance criteria |
 | --- | --- | --- |
-| T-301 | Vite + Vue 3 + TS + vue-query + vue-router + Tailwind skeleton; login page; embed pipeline | `go build` produces one binary serving `/` and `/api`; login sets the cookie |
-| T-302 | Overview page | All profiles render; `unreachable`/`unauthorized` shown clearly, not as an error screen; polling ≥ 5 s |
-| T-303 | Agent detail page: sessions and runs | Navigation from overview works; pagination works; token usage per session visible |
-| T-304 | Live activity feed via `EventSource` on `/activity/stream`, plus run detail on `/runs/{id}/stream` | Tool events render in real time; automatic reconnect after disconnect; resync via status polling |
+| T-301 | Vite + Vue 3 + TS + vue-query + vue-router + Tailwind skeleton; login page; embed pipeline | **Done** — `go build` produces one binary serving `/` and `/api`; login sets the cookie |
+| T-302 | Overview page | **Done** — All profiles render; `unreachable`/`unauthorized` shown clearly, not as an error screen; polling ≥ 5 s |
+| T-303 | Agent detail page: sessions and runs | **Done** — Navigation from overview works; pagination works; token usage per session visible |
+| T-304 | Live activity feed via `EventSource` on `/activity/stream`, plus run detail on `/runs/{id}/stream` | **Done** — Tool events render in real time; automatic reconnect after disconnect; resync via status polling |
 
 ### M4 — Deployment & documentation
 
 | ID | Task | Acceptance criteria |
 | --- | --- | --- |
-| T-401 | Multi-stage Dockerfile (Node build → Go build → distroless) | Final image < 30 MB; non-root user; `linux/amd64` |
-| T-402 | GitHub Actions: vet, lint, test, build, push to GHCR | Green on `main`; image tagged by SHA and `latest` |
-| T-403 | Compose stack `hermes-dashboard` on `proxy-net` with Traefik labels | Reachable over Tailscale; BFF port not published; resource limits set |
-| T-404 | Traefik LAN entrypoint + `IPAllowList` patch for `/metrics` (ADR-008) | `deploy/traefik/` documented; `svrdocker` scrapes successfully; other LAN hosts get 403 |
-| T-405 | Separate `alloy` stack (ADR-009) | `deploy/alloy/`; BFF JSON logs visible in Loki |
-| T-406 | Grafana dashboard JSON | `deploy/grafana/hermes-bff.json` in repo |
-| T-407 | README + operator runbook | A new engineer can run locally from the README alone; "tested against Hermes digest …" line present |
-| T-408 | Acceptance run | `docs/acceptance-v1.md` records the result of every test in § 10 |
+| T-401 | Multi-stage Dockerfile (Node build → Go build → distroless) | **Done** (13 MB) — Final image < 30 MB; non-root user; `linux/amd64` |
+| T-402 | GitHub Actions: vet, lint, test, build, push to GHCR | **Done** — Green on `main`; image tagged by SHA and `latest` |
+| T-403 | Compose stack `hermes-dashboard` on `proxy-net` with Traefik labels | **Done** (deploy/hermes-dashboard) — Reachable over Tailscale; BFF port not published; resource limits set |
+| T-404 | Traefik LAN entrypoint + `IPAllowList` patch for `/metrics` (ADR-008) | **Written** (deploy/traefik) — operator applies — `deploy/traefik/` documented; `svrdocker` scrapes successfully; other LAN hosts get 403 |
+| T-405 | Separate `alloy` stack (ADR-009) | **Written** (deploy/alloy) — operator applies — `deploy/alloy/`; BFF JSON logs visible in Loki |
+| T-406 | Grafana dashboard JSON | **Done** — `deploy/grafana/hermes-bff.json` in repo |
+| T-407 | README + operator runbook | **Done** — A new engineer can run locally from the README alone; "tested against Hermes digest …" line present |
+| T-408 | Acceptance run | **Pending** — docs/acceptance-v1.md — `docs/acceptance-v1.md` records the result of every test in § 10 |
 
 ## 8. Setup, Configuration & Deployment
 
