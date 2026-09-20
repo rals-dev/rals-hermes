@@ -14,7 +14,8 @@ coverage.out
 
 # Frontend
 web/node_modules/
-web/dist/
+web/dist/*
+!web/dist/.gitkeep
 web/.vite/
 
 # Editors / OS

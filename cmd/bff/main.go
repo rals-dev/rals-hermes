@@ -23,6 +23,7 @@ import (
 	"github.com/rals-dev/rals-hermes/internal/hermes"
 	"github.com/rals-dev/rals-hermes/internal/observ"
 	"github.com/rals-dev/rals-hermes/internal/server"
+	"github.com/rals-dev/rals-hermes/web"
 )
 
 // version is set at build time via -ldflags "-X main.version=...".
@@ -68,6 +69,11 @@ func run() error {
 		return fmt.Errorf("listen %s: %w", cfg.Server.Addr, err)
 	}
 
+	ui, bundled := web.FS()
+	if !bundled {
+		logger.Warn("web UI is not bundled into this build; only the API is served")
+		ui = nil
+	}
 	metrics := observ.New()
 	clients := make([]*hermes.Client, 0, len(cfg.Upstream.Profiles))
 	for _, p := range cfg.Upstream.Profiles {
@@ -85,6 +91,7 @@ func run() error {
 		AuthKey:    cfg.Auth.Key,
 		SessionTTL: cfg.Auth.SessionTTL,
 		Metrics:    metrics,
+		UI:         ui,
 		Activity: activity.Config{
 			PollInterval:  cfg.Activity.PollInterval,
 			Window:        cfg.Activity.Window,

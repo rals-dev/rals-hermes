@@ -14,11 +14,18 @@ type router struct {
 	paths map[string]struct{}
 }
 
-func newRouter() *router {
+// newRouter builds the mux with fallback as the "/" catch-all. Every
+// registered pattern is more specific than "/", so the fallback only sees
+// paths nothing else claimed — the JSON 404 by default, the SPA when a UI
+// bundle is present.
+func newRouter(fallback http.Handler) *router {
 	r := &router{ServeMux: http.NewServeMux(), paths: map[string]struct{}{}}
-	r.ServeMux.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
-		writeError(w, http.StatusNotFound, "not_found", "no such route")
-	})
+	if fallback == nil {
+		fallback = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			writeError(w, http.StatusNotFound, "not_found", "no such route")
+		})
+	}
+	r.ServeMux.Handle("/", fallback)
 	return r
 }
 

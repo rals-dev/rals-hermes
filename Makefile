@@ -1,6 +1,7 @@
-.PHONY: build run test lint vet fixtures
+.PHONY: build run test test-race lint vet fixtures web
 
-build:
+# Builds the frontend first so it is embedded (ADR-011).
+build: web
 	CGO_ENABLED=0 go build -trimpath -ldflags "-s -w -X main.version=$$(git rev-parse --short HEAD)" -o bin/bff ./cmd/bff
 
 run:
@@ -22,3 +23,6 @@ lint:
 
 fixtures:
 	./scripts/collect-fixtures.sh
+
+web:
+	cd web && npm ci && npm run build

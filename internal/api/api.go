@@ -4,6 +4,7 @@
 package api
 
 import (
+	"io/fs"
 	"log/slog"
 	"net/http"
 	"time"
@@ -36,6 +37,9 @@ type Deps struct {
 	// StreamKeepalive is how often BFF-generated streams send a comment
 	// line while idle. Zero means 15 s.
 	StreamKeepalive time.Duration
+	// UI is the built frontend (index.html at the root). Nil serves a JSON
+	// 404 at "/" instead.
+	UI fs.FS
 
 	// now overrides the clock in tests.
 	now func() time.Time
@@ -97,7 +101,11 @@ func NewHandler(d Deps) http.Handler {
 		h.byName[c.Name()] = c
 	}
 
-	r := newRouter()
+	var fallback http.Handler
+	if d.UI != nil {
+		fallback = uiHandler{fsys: d.UI}
+	}
+	r := newRouter(fallback)
 	r.handle("GET /healthz", healthz(d.Version))
 	if h.metrics != nil {
 		// Unauthenticated by design: reachable only through the Traefik LAN
