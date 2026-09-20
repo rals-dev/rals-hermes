@@ -1,0 +1,11 @@
+.git
+.claude
+bin
+dist
+web/node_modules
+web/dist
+config.yaml
+.env*
+*.md
+docs
+testdata
