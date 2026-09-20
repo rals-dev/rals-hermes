@@ -262,7 +262,7 @@ func (c *Client) getJSON(ctx context.Context, path string, query url.Values, out
 		c.log.Debug("upstream transport error", "op", op, "elapsed", time.Since(start).String(), "err", redactURL(err))
 		return c.wrap(op, KindUnreachable, 0, redactURL(err))
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	body, err := io.ReadAll(io.LimitReader(resp.Body, maxBodyBytes))
 	if err != nil {
 		return c.wrap(op, KindUnreachable, resp.StatusCode, err)
@@ -355,7 +355,7 @@ func (c *Client) StreamRunEvents(ctx context.Context, runID string) (*Stream, er
 		return nil, c.wrap(op, KindUnreachable, 0, redactURL(err))
 	}
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		werr := c.wrap(op, kindForStatus(resp.StatusCode), resp.StatusCode, nil)
 		c.observe(op, start, werr)
 		return nil, werr

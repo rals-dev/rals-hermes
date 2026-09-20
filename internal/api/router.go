@@ -25,7 +25,7 @@ func newRouter(fallback http.Handler) *router {
 			writeError(w, http.StatusNotFound, "not_found", "no such route")
 		})
 	}
-	r.ServeMux.Handle("/", fallback)
+	r.Handle("/", fallback)
 	return r
 }
 
@@ -33,7 +33,7 @@ func newRouter(fallback http.Handler) *router {
 // method-agnostic fallback that returns 405. The wrapper records the matched
 // pattern and {profile} value for the access log and metrics.
 func (r *router) handle(pattern string, h http.HandlerFunc) {
-	r.ServeMux.HandleFunc(pattern, func(w http.ResponseWriter, req *http.Request) {
+	r.HandleFunc(pattern, func(w http.ResponseWriter, req *http.Request) {
 		info := infoFrom(req.Context())
 		info.route = pattern
 		info.profile = req.PathValue("profile")
@@ -47,7 +47,7 @@ func (r *router) handle(pattern string, h http.HandlerFunc) {
 		return
 	}
 	r.paths[path] = struct{}{}
-	r.ServeMux.HandleFunc(path, func(w http.ResponseWriter, _ *http.Request) {
+	r.HandleFunc(path, func(w http.ResponseWriter, _ *http.Request) {
 		writeError(w, http.StatusMethodNotAllowed, "method_not_allowed", "method not allowed")
 	})
 }

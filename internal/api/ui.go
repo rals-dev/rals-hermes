@@ -34,7 +34,7 @@ func (u uiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		name = "index.html"
 	}
 	if f, err := u.fsys.Open(name); err == nil {
-		defer f.Close()
+		defer func() { _ = f.Close() }()
 		if st, err := f.Stat(); err == nil && !st.IsDir() {
 			u.serveFile(w, name, f)
 			return
@@ -50,7 +50,7 @@ func (u uiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusNotFound, "not_found", "the web UI is not bundled into this build")
 		return
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	u.serveFile(w, "index.html", f)
 }
 

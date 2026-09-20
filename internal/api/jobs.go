@@ -33,13 +33,14 @@ func (h *handlers) jobs(w http.ResponseWriter, r *http.Request) {
 		list    *hermes.JobList
 		err     error
 	}
+	ctx := r.Context()
 	results := make([]result, len(h.profiles))
 	var wg sync.WaitGroup
 	for i, c := range h.profiles {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			list, _, err := h.jobsCache.Get(r.Context(), "jobs/"+c.Name(), c.Jobs)
+			list, _, err := h.jobsCache.Get(ctx, "jobs/"+c.Name(), c.Jobs)
 			results[i] = result{profile: c.Name(), list: list, err: err}
 		}()
 	}

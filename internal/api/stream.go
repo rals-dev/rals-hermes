@@ -39,7 +39,7 @@ func (h *handlers) runStream(w http.ResponseWriter, r *http.Request) {
 		writeMappedError(w, err, "run_not_found")
 		return
 	}
-	defer stream.Close()
+	defer func() { _ = stream.Close() }()
 
 	hd := w.Header()
 	hd.Set("Content-Type", "text/event-stream; charset=utf-8")

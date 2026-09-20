@@ -1,6 +1,9 @@
 package hermes
 
-import "fmt"
+import (
+	"fmt"
+	"net/http"
+)
 
 // Kind classifies an upstream failure independently of transport details so
 // the API layer can map it to the BFF error taxonomy (PRD § 5).
@@ -65,12 +68,12 @@ func (e *UpstreamError) Error() string {
 func (e *UpstreamError) Unwrap() error { return e.cause }
 
 func kindForStatus(status int) Kind {
-	switch {
-	case status == 401 || status == 403:
+	switch status {
+	case http.StatusUnauthorized, http.StatusForbidden:
 		return KindUnauthorized
-	case status == 404:
+	case http.StatusNotFound:
 		return KindNotFound
-	case status == 429:
+	case http.StatusTooManyRequests:
 		return KindBusy
 	default:
 		return KindServerError

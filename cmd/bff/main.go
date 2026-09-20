@@ -64,7 +64,7 @@ func run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	ln, err := net.Listen("tcp", cfg.Server.Addr)
+	ln, err := (&net.ListenConfig{}).Listen(ctx, "tcp", cfg.Server.Addr)
 	if err != nil {
 		return fmt.Errorf("listen %s: %w", cfg.Server.Addr, err)
 	}

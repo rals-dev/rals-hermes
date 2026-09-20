@@ -21,7 +21,9 @@ func (h *handlers) activityStream(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "internal_error", "streaming unsupported")
 		return
 	}
-	events, cancel, err := h.activity.Subscribe(r.PathValue("profile"))
+	// The poller outlives any single request by design (ADR-018); it is not
+	// bound to r.Context().
+	events, cancel, err := h.activity.Subscribe(r.PathValue("profile")) //nolint:contextcheck // see above
 	if err != nil {
 		if errors.Is(err, activity.ErrUnknownProfile) {
 			writeMappedError(w, ErrProfileNotFound, "not_found")

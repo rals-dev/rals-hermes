@@ -55,9 +55,11 @@ func Run(ctx context.Context, ln net.Listener, h http.Handler, o Options) error 
 	}
 
 	o.Logger.Info("server shutting down", "timeout", o.ShutdownTimeout.String())
+	// Deliberately not derived from ctx: ctx is already cancelled, and the
+	// drain needs its own deadline.
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), o.ShutdownTimeout)
 	defer cancel()
-	if err := srv.Shutdown(shutdownCtx); err != nil {
+	if err := srv.Shutdown(shutdownCtx); err != nil { //nolint:contextcheck // see above
 		o.Logger.Warn("graceful shutdown incomplete, closing", "err", err)
 		_ = srv.Close()
 		return err

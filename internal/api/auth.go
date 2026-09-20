@@ -69,7 +69,7 @@ func (s *sessions) login(w http.ResponseWriter, r *http.Request) {
 	s.tokens[token] = s.now().Add(s.ttl)
 	s.mu.Unlock()
 
-	http.SetCookie(w, &http.Cookie{
+	http.SetCookie(w, &http.Cookie{ //nolint:gosec // Secure is deliberately off: plain HTTP inside WireGuard (ADR-010)
 		Name:     sessionCookieName,
 		Value:    token,
 		Path:     "/",
@@ -89,7 +89,7 @@ func (s *sessions) logout(w http.ResponseWriter, r *http.Request) {
 		delete(s.tokens, c.Value)
 		s.mu.Unlock()
 	}
-	http.SetCookie(w, &http.Cookie{Name: sessionCookieName, Value: "", Path: "/", MaxAge: -1, HttpOnly: true, SameSite: http.SameSiteStrictMode})
+	http.SetCookie(w, &http.Cookie{Name: sessionCookieName, Value: "", Path: "/", MaxAge: -1, HttpOnly: true, SameSite: http.SameSiteStrictMode}) //nolint:gosec // see login
 	w.WriteHeader(http.StatusNoContent)
 }
 

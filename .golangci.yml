@@ -13,13 +13,17 @@ linters:
     - unconvert
     - unparam
   settings:
-    gosec:
-      excludes:
-        - G104 # unhandled errors are caught by errcheck
     revive:
       rules:
         - name: exported
           arguments: ["checkPrivateReceivers", "sayRepetitiveInstead"]
+  exclusions:
+    rules:
+      # Tests build requests from constants and open fixture files by path;
+      # the production rules (contexts, variable URLs, file inclusion) do
+      # not add safety there and only add noise.
+      - path: _test\.go
+        linters: [noctx, gosec, unparam, errcheck]
 
 formatters:
   enable:
