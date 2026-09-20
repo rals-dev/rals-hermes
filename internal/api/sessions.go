@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"regexp"
 	"strconv"
-	"time"
 
 	"github.com/rals-dev/rals-hermes/internal/hermes"
+	"github.com/rals-dev/rals-hermes/internal/view"
 )
 
 // Query parameter bounds. Hermes accepts more, but the dashboard never needs
@@ -19,67 +19,17 @@ const (
 
 var sourcePattern = regexp.MustCompile(`^[a-z0-9_-]{1,32}$`)
 
-// sessionView is the dashboard's projection of a Hermes session: usage is
-// grouped, timestamps are RFC 3339, and "open" is derived so the UI never
-// re-implements the end_reason rule.
-type sessionView struct {
-	ID               string     `json:"id"`
-	Source           string     `json:"source"`
-	Model            string     `json:"model"`
-	Title            *string    `json:"title"`
-	Preview          *string    `json:"preview"`
-	StartedAt        time.Time  `json:"started_at"`
-	EndedAt          *time.Time `json:"ended_at"`
-	EndReason        *string    `json:"end_reason"`
-	Open             bool       `json:"open"`
-	LastActive       time.Time  `json:"last_active"`
-	MessageCount     int        `json:"message_count"`
-	ToolCallCount    int        `json:"tool_call_count"`
-	APICallCount     int        `json:"api_call_count"`
-	ParentSessionID  *string    `json:"parent_session_id"`
-	Usage            usageView  `json:"usage"`
-	EstimatedCostUSD *float64   `json:"estimated_cost_usd"`
-	ActualCostUSD    *float64   `json:"actual_cost_usd"`
-}
-
-type usageView struct {
-	InputTokens      int64 `json:"input_tokens"`
-	OutputTokens     int64 `json:"output_tokens"`
-	CacheReadTokens  int64 `json:"cache_read_tokens"`
-	CacheWriteTokens int64 `json:"cache_write_tokens"`
-	ReasoningTokens  int64 `json:"reasoning_tokens"`
-}
-
-func toSessionView(s hermes.Session) sessionView {
-	v := sessionView{
-		ID: s.ID, Source: s.Source, Model: s.Model, Title: s.Title, Preview: s.Preview,
-		StartedAt: s.StartedAt.Time(), EndReason: s.EndReason, Open: s.EndReason == nil && s.EndedAt == nil,
-		LastActive: s.LastActive.Time(), MessageCount: s.MessageCount, ToolCallCount: s.ToolCallCount,
-		APICallCount: s.APICallCount, ParentSessionID: s.ParentSessionID,
-		Usage: usageView{
-			InputTokens: s.InputTokens, OutputTokens: s.OutputTokens, CacheReadTokens: s.CacheReadTokens,
-			CacheWriteTokens: s.CacheWriteTokens, ReasoningTokens: s.ReasoningTokens,
-		},
-		EstimatedCostUSD: s.EstimatedCostUSD, ActualCostUSD: s.ActualCostUSD,
-	}
-	if s.EndedAt != nil {
-		t := s.EndedAt.Time()
-		v.EndedAt = &t
-	}
-	return v
-}
-
 type sessionListResponse struct {
-	Profile string        `json:"profile"`
-	Data    []sessionView `json:"data"`
-	HasMore bool          `json:"has_more"`
-	Limit   int           `json:"limit"`
-	Offset  int           `json:"offset"`
+	Profile string         `json:"profile"`
+	Data    []view.Session `json:"data"`
+	HasMore bool           `json:"has_more"`
+	Limit   int            `json:"limit"`
+	Offset  int            `json:"offset"`
 }
 
 type sessionDetailResponse struct {
 	Profile  string              `json:"profile"`
-	Session  sessionView         `json:"session"`
+	Session  view.Session        `json:"session"`
 	Messages *hermes.MessageList `json:"messages"`
 }
 
@@ -130,9 +80,9 @@ func (h *handlers) listSessions(w http.ResponseWriter, r *http.Request) {
 		writeMappedError(w, err, "not_found")
 		return
 	}
-	resp := sessionListResponse{Profile: c.Name(), Data: make([]sessionView, 0, len(list.Data)), HasMore: list.HasMore, Limit: list.Limit, Offset: list.Offset}
+	resp := sessionListResponse{Profile: c.Name(), Data: make([]view.Session, 0, len(list.Data)), HasMore: list.HasMore, Limit: list.Limit, Offset: list.Offset}
 	for _, s := range list.Data {
-		resp.Data = append(resp.Data, toSessionView(s))
+		resp.Data = append(resp.Data, view.FromSession(s))
 	}
 	writeJSON(w, http.StatusOK, resp)
 }
@@ -158,7 +108,7 @@ func (h *handlers) sessionDetail(w http.ResponseWriter, r *http.Request) {
 		writeMappedError(w, err, "session_not_found")
 		return
 	}
-	writeJSON(w, http.StatusOK, sessionDetailResponse{Profile: c.Name(), Session: toSessionView(detail.Session), Messages: msgs})
+	writeJSON(w, http.StatusOK, sessionDetailResponse{Profile: c.Name(), Session: view.FromSession(detail.Session), Messages: msgs})
 }
 
 func (h *handlers) run(w http.ResponseWriter, r *http.Request) {

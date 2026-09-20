@@ -249,7 +249,7 @@ func TestHub_ChildSessionsBecomeSubagentEvents(t *testing.T) {
 	src.setSession(child)
 	got = collect(t, ch, 300*time.Millisecond, hasType("subagent.complete"))
 	last := got[len(got)-1]
-	if last.Type != "subagent.complete" || last.SessionID != "child" || last.EndReason != "agent_close" || last.Session == nil || last.Session.OutputTokens != 123 {
+	if last.Type != "subagent.complete" || last.SessionID != "child" || last.EndReason != "agent_close" || last.Session == nil || last.Session.Usage.OutputTokens != 123 {
 		t.Fatalf("events = %+v", got)
 	}
 }
@@ -327,5 +327,59 @@ func TestHub_TwoSubscribersShareOnePoller(t *testing.T) {
 	}
 	if h.Subscribers("default") != 2 {
 		t.Errorf("Subscribers = %d, want 2", h.Subscribers("default"))
+	}
+}
+
+// Regression: a session that was outside the window at baseline and becomes
+// active again must not have its whole history replayed (observed live on
+// 2026-09-20: 435 messages streamed after one Telegram reply).
+func TestHub_SessionReenteringTheWindowDoesNotReplayHistory(t *testing.T) {
+	src := newFake("default")
+	old := time.Now().Add(-time.Hour)
+	// 40 historical messages, all older than the window.
+	var history []hermes.Message
+	for i := range 20 {
+		tc := toolCallMsg(int64(100+2*i), "terminal", `{"cmd":"old"}`)
+		tc.Timestamp = unix(old)
+		tr := toolResultMsg(int64(101+2*i), "terminal", "old output")
+		tr.Timestamp = unix(old)
+		history = append(history, tc, tr)
+	}
+	src.setSession(session("dormant", old, 0))
+	src.appendMessages("dormant", history...)
+	src.mu.Lock()
+	src.sessions[0].LastActive = unix(old) // appendMessages bumped it; keep it dormant
+	src.mu.Unlock()
+
+	h := newTestHub(src)
+	ch, cancel, _ := h.Subscribe("default")
+	defer cancel()
+	if got := collect(t, ch, 80*time.Millisecond, hasType("session.snapshot")); len(got) != 0 {
+		t.Fatalf("dormant session must not be tracked at baseline, got %+v", got)
+	}
+
+	// One new message wakes the session up.
+	src.appendMessages("dormant", toolCallMsg(200, "web_search", `{"q":"now"}`))
+	got := collect(t, ch, 400*time.Millisecond, func(e Event) bool { return e.Type == "tool.started" && e.Tool == "web_search" })
+
+	var replayed int
+	for _, e := range got {
+		if e.Tool == "terminal" {
+			replayed++
+		}
+	}
+	if replayed != 0 {
+		t.Errorf("%d historical tool events replayed, want 0: %+v", replayed, got)
+	}
+	if len(got) == 0 || got[len(got)-1].Tool != "web_search" {
+		t.Errorf("the new message was not delivered: %+v", got)
+	}
+	if q := src.lastMsgQuery; q.Offset == 0 {
+		t.Errorf("tail fetched from offset 0 (full history), want a bounded tail: %+v", q)
+	}
+	for _, e := range got {
+		if e.Type == "session.started" {
+			t.Errorf("a re-entering session is not new; got session.started")
+		}
 	}
 }

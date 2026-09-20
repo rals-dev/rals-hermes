@@ -11,7 +11,7 @@ package activity
 import (
 	"time"
 
-	"github.com/rals-dev/rals-hermes/internal/hermes"
+	"github.com/rals-dev/rals-hermes/internal/view"
 )
 
 // Event types emitted on a profile's stream.
@@ -50,9 +50,9 @@ type Event struct {
 	At        time.Time `json:"at"`
 
 	// Session is the current session state for snapshot/start/end events.
-	Session         *hermes.Session `json:"session,omitempty"`
-	ParentSessionID string          `json:"parent_session_id,omitempty"`
-	EndReason       string          `json:"end_reason,omitempty"`
+	Session         *view.Session `json:"session,omitempty"`
+	ParentSessionID string        `json:"parent_session_id,omitempty"`
+	EndReason       string        `json:"end_reason,omitempty"`
 
 	// Tool events.
 	Tool    string `json:"tool,omitempty"`

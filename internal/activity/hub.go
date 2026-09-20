@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/rals-dev/rals-hermes/internal/hermes"
+	"github.com/rals-dev/rals-hermes/internal/view"
 )
 
 // Source is the slice of hermes.Client the poller needs.
@@ -32,6 +33,12 @@ type SubscriberGauge interface {
 
 // ErrUnknownProfile is returned by Subscribe for a profile not in the hub.
 var ErrUnknownProfile = errors.New("activity: unknown profile")
+
+// reentryTail is how many trailing messages are fetched when a session that
+// was not tracked (dormant, then active again) enters the window. Only
+// messages newer than the window cutoff are emitted from that tail, so an
+// old session waking up costs one small fetch instead of a full replay.
+const reentryTail = 8
 
 // subscriberBuffer is the per-subscriber channel depth. A subscriber that
 // falls this far behind loses events rather than stalling the poller; the
@@ -196,7 +203,7 @@ func (p *poller) run(stop <-chan struct{}) {
 }
 
 func (p *poller) tick(ctx context.Context) {
-	now := time.Now()
+	now := time.Now().UTC()
 	baseline := !p.baselined
 	list, err := p.src.Sessions(ctx, hermes.SessionsQuery{Limit: p.hub.cfg.MaxSessions * 2, IncludeChildren: true})
 	if err != nil {
@@ -233,17 +240,22 @@ func (p *poller) tick(ctx context.Context) {
 		}
 		prev, known := p.seen[id]
 		if !known {
-			// A session that appeared since the last tick: announce it and
-			// tail it from the beginning — it is new, so its history is short.
-			prev = trackedSession{}
-			typ := TypeSessionStarted
-			if s.ParentSessionID != nil {
-				typ = TypeSubagentStart
+			// First sight after baseline. Either the session is genuinely new
+			// (started inside the window) or it was dormant and woke up; in
+			// both cases only the tail is fetched and anything older than the
+			// window is dropped, so history is never replayed.
+			prev = trackedSession{cursor: max(0, s.MessageCount-reentryTail)}
+			switch {
+			case s.StartedAt.Time().Before(cutoff):
+				p.emit(p.sessionEvent(TypeSnapshot, s, now))
+			case s.ParentSessionID != nil:
+				p.emit(p.sessionEvent(TypeSubagentStart, s, now))
+			default:
+				p.emit(p.sessionEvent(TypeSessionStarted, s, now))
 			}
-			p.emit(p.sessionEvent(typ, s, now))
 		}
 		if s.MessageCount > prev.cursor {
-			p.tail(ctx, s, prev.cursor, now)
+			p.tail(ctx, s, prev.cursor, cutoff, now)
 			prev.cursor = s.MessageCount
 			p.emit(p.sessionEvent(TypeSnapshot, s, now))
 		}
@@ -266,8 +278,9 @@ func (p *poller) tick(ctx context.Context) {
 	}
 }
 
-// tail fetches messages after cursor and emits one event per message.
-func (p *poller) tail(ctx context.Context, s hermes.Session, cursor int, now time.Time) {
+// tail fetches messages after cursor and emits one event per message that
+// is not older than cutoff.
+func (p *poller) tail(ctx context.Context, s hermes.Session, cursor int, cutoff, now time.Time) {
 	delta := s.MessageCount - cursor
 	msgs, err := p.src.Messages(ctx, s.ID, hermes.MessagesQuery{Offset: cursor, Limit: delta, Order: "oldest"})
 	if err != nil {
@@ -278,6 +291,9 @@ func (p *poller) tail(ctx context.Context, s hermes.Session, cursor int, now tim
 		return
 	}
 	for _, m := range msgs.Data {
+		if m.Timestamp != 0 && m.Timestamp.Time().Before(cutoff) {
+			continue
+		}
 		for _, e := range messageEvents(p.src.Name(), s.ID, m) {
 			p.emit(e)
 		}
@@ -325,7 +341,7 @@ func messageEvents(profile, sessionID string, m hermes.Message) []Event {
 }
 
 func (p *poller) sessionEvent(typ string, s hermes.Session, now time.Time) Event {
-	sc := s
+	sc := view.FromSession(s)
 	e := Event{Type: typ, Profile: p.src.Name(), SessionID: s.ID, At: now, Session: &sc}
 	if s.ParentSessionID != nil {
 		e.ParentSessionID = *s.ParentSessionID
