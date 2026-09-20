@@ -64,7 +64,7 @@ func TestClient_SendsBearerAndJoinsPrefixedBaseURL(t *testing.T) {
 func TestClient_TimeoutIsEnforcedWithoutRetry(t *testing.T) {
 	var hits atomic.Int32
 	release := make(chan struct{})
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
 		hits.Add(1)
 		select {
 		case <-release:

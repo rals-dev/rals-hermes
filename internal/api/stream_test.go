@@ -65,7 +65,7 @@ func startBFF(t *testing.T, d Deps) (base string, cookie *http.Cookie) {
 	return "", nil
 }
 
-func openStream(t *testing.T, ctx context.Context, base string, cookie *http.Cookie, path string) *http.Response {
+func openStream(ctx context.Context, t *testing.T, base string, cookie *http.Cookie, path string) *http.Response {
 	t.Helper()
 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, base+path, nil)
 	req.AddCookie(cookie)
@@ -92,7 +92,7 @@ func TestStream_RelaysEventsAndKeepalivesAsTheyArrive(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	resp := openStream(t, ctx, base, cookie, "/api/agents/default/runs/r1/stream")
+	resp := openStream(ctx, t, base, cookie, "/api/agents/default/runs/r1/stream")
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK || !strings.HasPrefix(resp.Header.Get("Content-Type"), "text/event-stream") {
 		t.Fatalf("status=%d content-type=%q", resp.StatusCode, resp.Header.Get("Content-Type"))
@@ -133,7 +133,7 @@ func TestStream_ClientDisconnectClosesUpstream(t *testing.T) {
 	base, cookie := startBFF(t, d)
 
 	ctx, cancel := context.WithCancel(context.Background())
-	resp := openStream(t, ctx, base, cookie, "/api/agents/default/runs/r1/stream")
+	resp := openStream(ctx, t, base, cookie, "/api/agents/default/runs/r1/stream")
 	buf := make([]byte, 64)
 	if _, err := resp.Body.Read(buf); err != nil { // wait for the first event
 		t.Fatalf("read: %v", err)
@@ -166,7 +166,7 @@ func TestStream_UpstreamFailureMidStreamBecomesErrorEvent(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	resp := openStream(t, ctx, base, cookie, "/api/agents/default/runs/r1/stream")
+	resp := openStream(ctx, t, base, cookie, "/api/agents/default/runs/r1/stream")
 	defer resp.Body.Close()
 	sc := bufio.NewScanner(resp.Body)
 	var lines []string
@@ -193,7 +193,7 @@ func TestStream_UpstreamFailureMidStreamBecomesErrorEvent(t *testing.T) {
 func TestStream_Upstream404IsPlainJSONRunNotFound(t *testing.T) {
 	d := newTestDeps(t, time.Second, profileSpec{"default", serveStatus(404)})
 	base, cookie := startBFF(t, d)
-	resp := openStream(t, context.Background(), base, cookie, "/api/agents/default/runs/ghost/stream")
+	resp := openStream(context.Background(), t, base, cookie, "/api/agents/default/runs/ghost/stream")
 	defer resp.Body.Close()
 	var body errorBody
 	_ = json.NewDecoder(resp.Body).Decode(&body)

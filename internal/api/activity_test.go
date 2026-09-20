@@ -23,7 +23,7 @@ func TestActivityStream_EmitsSnapshotsThenDeltasAndKeepalives(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
-	resp := openStream(t, ctx, base, cookie, "/api/agents/default/activity/stream")
+	resp := openStream(ctx, t, base, cookie, "/api/agents/default/activity/stream")
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK || !strings.HasPrefix(resp.Header.Get("Content-Type"), "text/event-stream") {
 		t.Fatalf("status=%d ct=%q", resp.StatusCode, resp.Header.Get("Content-Type"))
@@ -66,14 +66,14 @@ func TestActivityStream_UnknownProfileIs404AndDisconnectReleasesSubscription(t *
 	d.Activity = activity.Config{PollInterval: 20 * time.Millisecond, Window: 24 * 365 * time.Hour, MaxSessions: 2, IdleStopAfter: 50 * time.Millisecond}
 	base, cookie := startBFF(t, d)
 
-	resp := openStream(t, context.Background(), base, cookie, "/api/agents/ghost/activity/stream")
+	resp := openStream(context.Background(), t, base, cookie, "/api/agents/ghost/activity/stream")
 	resp.Body.Close()
 	if resp.StatusCode != http.StatusNotFound {
 		t.Errorf("unknown profile: status = %d", resp.StatusCode)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	resp = openStream(t, ctx, base, cookie, "/api/agents/default/activity/stream")
+	resp = openStream(ctx, t, base, cookie, "/api/agents/default/activity/stream")
 	buf := make([]byte, 16)
 	_, _ = resp.Body.Read(buf)
 	cancel()
