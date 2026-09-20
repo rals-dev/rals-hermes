@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+/* Design tokens — dark first (an operator's screen), light via the OS setting.
+   Status is always a word next to a dot; colour is never the only carrier. */
+:root {
+  color-scheme: dark light;
+  --bg: #0f1720;
+  --surface: #16212b;
+  --surface-2: #1c2937;
+  --line: #243241;
+  --ink: #e6edf3;
+  --muted: #8b9bab;
+  --faint: #5d6c7b;
+  --accent: #58a6ff;
+  --ok: #3fb950;
+  --warn: #d29922;
+  --bad: #f85149;
+  --auth: #db61a2;
+  --sel: rgba(88, 166, 255, 0.14);
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f5f7f9;
+    --surface: #ffffff;
+    --surface-2: #eef2f5;
+    --line: #d5dde5;
+    --ink: #17212b;
+    --muted: #55677a;
+    --faint: #8a98a6;
+    --accent: #0b64d8;
+    --ok: #1a7f37;
+    --warn: #9a6700;
+    --bad: #cf222e;
+    --auth: #b03a7c;
+    --sel: rgba(11, 100, 216, 0.1);
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-accent: var(--accent);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-bad: var(--bad);
+  --color-auth: var(--auth);
+  --color-sel: var(--sel);
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+html {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+body { margin: 0; }
+a { color: inherit; }
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* One deliberate motion: a new feed row settles in. */
+@keyframes settle {
+  from { background-color: var(--sel); }
+  to { background-color: transparent; }
+}
+.feed-new { animation: settle 1.6s ease-out 1; }
+@media (prefers-reduced-motion: reduce) {
+  .feed-new { animation: none; }
+  * { transition: none !important; }
+}
+
+.tabular { font-variant-numeric: tabular-nums; }

@@ -38,6 +38,9 @@ func (h *handlers) activityStream(w http.ResponseWriter, r *http.Request) {
 	hd.Set("Connection", "keep-alive")
 	hd.Set("X-Accel-Buffering", "no")
 	w.WriteHeader(http.StatusOK)
+	// A first comment line makes proxies release the headers and lets the
+	// browser's EventSource fire onopen before any real event exists.
+	_, _ = w.Write([]byte(": connected\n\n"))
 	flusher.Flush()
 
 	keepalive := time.NewTicker(h.keepalive)
