@@ -245,15 +245,24 @@ srv01$ docker compose up -d
 srv01$ docker exec prometheus wget -qO- 'http://127.0.0.1:9090/api/v1/targets' | grep -o '"health":"[a-z]*"'
 ```
 
-Expected: `"health":"up"` for both targets. Then in Grafana on `svrdocker`:
-Connections → Data sources → Add Prometheus, URL `http://<lan-ip>:9090`.
+Expected: `"health":"up"` for both targets. With Grafana on this host (4.5)
+`PROM_BIND` can stay `127.0.0.1`; Grafana reaches Prometheus over `proxy-net`.
 
 - [ ] Done
 
-### 4.5 Import the Grafana dashboard
+### 4.5 Deploy the `grafana` stack on this host
 
-Import `deploy/grafana/hermes-bff.json` via Dashboards → New → Import, select
-the existing Prometheus data source.
+```
+srv01$ mkdir -p /srv/stacks/grafana && cd /srv/stacks/grafana
+# copy deploy/grafana/compose.yaml, provisioning/, hermes-bff.json; .env from .env.example
+srv01$ chmod 600 .env && docker compose up -d
+srv01$ docker compose logs --tail=5
+```
+
+Add `grafana.srv01-rals.<tailnet>.ts.net` to the Mac's `/etc/hosts` like the
+dashboard, open it, sign in with the admin credentials from `.env`. Folder
+*Hermes* → dashboard *Hermes BFF* should already show data (Prometheus has
+been scraping since 4.4).
 
 - [ ] Done
 

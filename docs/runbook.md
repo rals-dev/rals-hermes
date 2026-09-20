@@ -26,10 +26,13 @@ repository owner).
 4. Alloy stack (`/srv/stacks/alloy/`): copy `deploy/alloy/compose.yaml`,
    `config.alloy`, set `LOKI_URL` in `.env`, `docker compose up -d`.
 5. Prometheus stack (`/srv/stacks/prometheus/`): copy
-   `deploy/prometheus/compose.yaml`, `prometheus.yml`, set `PROM_BIND=<lan-ip>`
-   in `.env`, `docker compose up -d`. In Grafana on `svrdocker` add
-   `http://<lan-ip>:9090` as a Prometheus data source and import
-   `deploy/grafana/hermes-bff.json`.
+   `deploy/prometheus/compose.yaml`, `prometheus.yml`, `.env` (`PROM_BIND`
+   can stay `127.0.0.1` now that Grafana is local), `docker compose up -d`.
+6. Grafana stack (`/srv/stacks/grafana/`): copy `deploy/grafana/compose.yaml`,
+   `provisioning/`, `hermes-bff.json`, and `.env` from `.env.example`
+   (`GRAFANA_HOST`, admin password, optional `LOKI_URL`). `docker compose up -d`.
+   The Prometheus data source and the "Hermes BFF" dashboard (folder
+   *Hermes*) are provisioned automatically; open `http://<GRAFANA_HOST>/`.
 
 ## 2. Upgrading the dashboard
 

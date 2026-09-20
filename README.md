@@ -126,7 +126,8 @@ failures are classified (`upstream_unreachable`, `upstream_unauthorized`,
 
 Images are built by GitHub Actions and published to `ghcr.io/<owner>/rals-hermes`
 (`:latest`, `:<sha>`, `:<tag>`). The compose stacks (dashboard, Prometheus,
-Alloy) and the Grafana dashboard are under `deploy/`; the
+Grafana with provisioned data source and dashboard, Alloy) are under
+`deploy/`; the
 step-by-step procedure for the host is [`docs/runbook.md`](docs/runbook.md).
 
 ## Security model

@@ -1,0 +1,55 @@
+# Grafana on srv01-rals, provisioned from this directory. Stack lives at
+# /srv/stacks/grafana/ with this file, provisioning/, hermes-bff.json, .env.
+#
+# Reaches Prometheus over proxy-net (http://prometheus:9090); served through
+# Traefik on the Tailscale entrypoint like the dashboard itself.
+
+services:
+  grafana:
+    image: grafana/grafana-oss:12.2.0
+    container_name: grafana
+    restart: unless-stopped
+    user: "472:472"
+    environment:
+      GF_SERVER_ROOT_URL: http://${GRAFANA_HOST}/
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?set in .env}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_USERS_DEFAULT_THEME: dark
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES: "false"
+      GF_NEWS_NEWS_FEED_ENABLED: "false"
+      GF_LOG_MODE: console
+      GF_LOG_LEVEL: warn
+      # Optional Loki on another host; leave empty to skip the data source.
+      LOKI_URL: ${LOKI_URL:-}
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./provisioning:/etc/grafana/provisioning:ro
+      - ./hermes-bff.json:/var/lib/grafana/dashboards/hermes-bff.json:ro
+    networks:
+      - proxy-net
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy-net"
+      - "traefik.http.routers.grafana.entrypoints=web"
+      - "traefik.http.routers.grafana.rule=Host(`${GRAFANA_HOST}`)"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+
+volumes:
+  grafana-data:
+
+networks:
+  proxy-net:
+    external: true
