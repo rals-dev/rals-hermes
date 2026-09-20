@@ -1,0 +1,49 @@
+// Ship Docker container logs from this host to Loki. Only containers with
+// the label `logging=loki` are collected (the BFF sets it); add the label
+// to the Hermes container if its logs are wanted too.
+
+discovery.docker "local" {
+  host             = "unix:///var/run/docker.sock"
+  refresh_interval = "15s"
+  filter {
+    name   = "label"
+    values = ["logging=loki"]
+  }
+}
+
+discovery.relabel "containers" {
+  targets = discovery.docker.local.targets
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+  }
+  rule {
+    target_label = "host"
+    replacement  = env("HOSTNAME")
+  }
+}
+
+loki.source.docker "containers" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.relabel.containers.output
+  forward_to = [loki.process.json.receiver]
+}
+
+// The BFF writes one JSON object per line; lift the level and route so
+// Loki can filter without a full parse (|= "..." still works on the raw line).
+loki.process "json" {
+  stage.json {
+    expressions = { level = "level", route = "route", status = "status" }
+  }
+  stage.labels {
+    values = { level = "" }
+  }
+  forward_to = [loki.write.svrdocker.receiver]
+}
+
+loki.write "svrdocker" {
+  endpoint {
+    url = env("LOKI_URL")
+  }
+}

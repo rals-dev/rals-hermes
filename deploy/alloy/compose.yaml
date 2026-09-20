@@ -1,0 +1,29 @@
+# Grafana Alloy on srv01-rals (ADR-009): tails container logs and ships them
+# to Loki on svrdocker over the LAN. Its own stack at /srv/stacks/alloy/ so
+# the Docker socket never sits next to the BFF.
+
+services:
+  alloy:
+    image: grafana/alloy:v1.10.0
+    container_name: alloy
+    restart: unless-stopped
+    command:
+      - run
+      - --server.http.listen-addr=127.0.0.1:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    environment:
+      LOKI_URL: ${LOKI_URL:?e.g. http://<svrdocker-lan-ip>:3100/loki/api/v1/push}
+      HOSTNAME: srv01-rals
+    volumes:
+      - ./config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - alloy-data:/var/lib/alloy/data
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 128M
+
+volumes:
+  alloy-data:

@@ -1,0 +1,56 @@
+# Hermes monitoring dashboard — BFF + embedded UI (T-403).
+# Lives at /srv/stacks/hermes-dashboard/ next to config.yaml and .env.
+#
+# Reachable only through Traefik on proxy-net; no port is published on the
+# host. /metrics is exposed on the separate LAN entrypoint (deploy/traefik).
+
+services:
+  bff:
+    image: ghcr.io/${IMAGE_OWNER}/rals-hermes:${IMAGE_TAG:-latest}
+    container_name: hermes-dashboard
+    restart: unless-stopped
+    read_only: true
+    user: "65532:65532"
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      BFF_API_KEY: ${BFF_API_KEY:?set in .env}
+      HERMES_KEY_DEFAULT: ${HERMES_KEY_DEFAULT:?set in .env}
+      HERMES_KEY_CODER: ${HERMES_KEY_CODER:?set in .env}
+      HERMES_KEY_TESTER: ${HERMES_KEY_TESTER:?set in .env}
+      HERMES_KEY_PRODUCT: ${HERMES_KEY_PRODUCT:?set in .env}
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+    networks:
+      - proxy-net
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 128M
+    healthcheck:
+      # distroless has no shell or curl; the binary's own liveness is the
+      # /healthz route, probed by Traefik/Prometheus rather than Docker.
+      disable: true
+    labels:
+      - "logging=loki"
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy-net"
+      # UI + API on the Tailscale-facing entrypoint. /metrics is excluded
+      # here and served only on the LAN entrypoint below.
+      - "traefik.http.routers.hermes-dashboard.entrypoints=web"
+      - "traefik.http.routers.hermes-dashboard.rule=Host(`${DASHBOARD_HOST}`) && !PathPrefix(`/metrics`)"
+      - "traefik.http.routers.hermes-dashboard.service=hermes-dashboard"
+      - "traefik.http.services.hermes-dashboard.loadbalancer.server.port=8080"
+      # Prometheus scrape path on the LAN entrypoint, allow-listed (ADR-008).
+      - "traefik.http.routers.hermes-metrics.entrypoints=metrics"
+      - "traefik.http.routers.hermes-metrics.rule=Path(`/metrics`)"
+      - "traefik.http.routers.hermes-metrics.middlewares=hermes-metrics-allow"
+      - "traefik.http.routers.hermes-metrics.service=hermes-dashboard"
+      - "traefik.http.middlewares.hermes-metrics-allow.ipallowlist.sourcerange=${METRICS_ALLOW_CIDR}"
+
+networks:
+  proxy-net:
+    external: true
