@@ -5,14 +5,25 @@ updates:
     schedule: { interval: weekly, day: monday }
     groups:
       go-deps: { patterns: ["*"] }
+
   - package-ecosystem: npm
     directory: /web
     schedule: { interval: weekly, day: monday }
     groups:
       npm-deps: { patterns: ["*"] }
+    ignore:
+      # vue-tsc does not support TypeScript 7 yet (./lib/tsc no longer exported).
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
+
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: weekly, day: monday }
+
   - package-ecosystem: docker
     directory: /
     schedule: { interval: weekly, day: monday }
+    ignore:
+      # Stay on the Node LTS line (even majors).
+      - dependency-name: node
+        update-types: ["version-update:semver-major"]
