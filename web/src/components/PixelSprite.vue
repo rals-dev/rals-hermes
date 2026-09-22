@@ -3,7 +3,7 @@
 // stepping through its frames at a fixed rate. Swapping sprites.ts for a
 // real sprite-sheet later only needs framesFor() to keep returning
 // string[][] grids of the same palette shape — nothing here would change.
-import { onBeforeUnmount, ref, useTemplateRef, watch } from 'vue'
+import { onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
 import { framesFor, palette, spriteCols, spriteRows, type Pose } from '@/lib/sprites'
 
 const props = withDefaults(defineProps<{ pose: Pose; shirtColor: string; scale?: number }>(), { scale: 3 })
@@ -47,7 +47,13 @@ function draw() {
 }
 
 watch(() => props.pose, restartAnimation, { immediate: true })
-watch([frameIndex, () => props.shirtColor, () => props.scale], draw, { immediate: true, flush: 'post' })
+// `pose` is tracked here too: a pose change that happens to land on the same
+// frameIndex (e.g. always resetting to 0) must still repaint. `onMounted`
+// guarantees the very first paint — a plain immediate watcher can fire
+// before the <canvas> ref is bound, and for a single-frame pose (offline,
+// error) there is no interval to retry it, leaving the canvas blank forever.
+watch([() => props.pose, frameIndex, () => props.shirtColor, () => props.scale], draw, { flush: 'post' })
+onMounted(draw)
 onBeforeUnmount(() => { if (timer) clearInterval(timer) })
 </script>
 
