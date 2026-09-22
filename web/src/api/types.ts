@@ -153,6 +153,24 @@ export interface JobsResponse {
   errors: { profile: string; error: ErrorBody }[]
 }
 
+export interface UsageProfile {
+  profile: string
+  session_count: number
+  usage: Usage
+  estimated_cost_usd: number | null
+  actual_cost_usd: number | null
+  // Sessions kept coming for the whole window (safety cap hit): totals are
+  // a lower bound for this profile, not the full window.
+  truncated: boolean
+}
+
+export interface UsageResponse {
+  generated_at: string
+  window_hours: number
+  profiles: UsageProfile[]
+  errors: { profile: string; error: ErrorBody }[]
+}
+
 export type ActivityEventType =
   | 'session.snapshot'
   | 'session.started'
