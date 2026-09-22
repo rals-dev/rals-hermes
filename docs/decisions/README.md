@@ -25,3 +25,7 @@ One file per decision, numbered in the order they were taken during the
 | 018 | [Activity poller is lazy and bounded](018-lazy-bounded-poller.md) |
 | 019 | [Milestones M0–M4, test-first, one commit per ticket on main](019-milestones-and-workflow.md) |
 | 020 | [Everything in the repository is written in English](020-english-everywhere.md) |
+| 022 | [Per-agent usage monitoring — on-the-fly, no persisted state](022-usage-monitoring.md) |
+
+021 is reserved by the floor-view branch (PR open, not yet merged as this
+was written); its ADR will fill the gap once that lands.

@@ -16,7 +16,7 @@ Tested against Hermes **0.21.2**, image digest
 
 | Page | Answers |
 | --- | --- |
-| Overview | Is the gateway up? Which profiles are reachable and accepting their key? Is any agent working right now? A live feed of tool calls, replies and delegations across every profile. |
+| Overview | Is the gateway up? Which profiles are reachable and accepting their key? Is any agent working right now? Token/cost usage per profile over the last 24h. A live feed of tool calls, replies and delegations across every profile. |
 | Agent | Sessions of one profile (source, open/ended, tool calls, tokens, cost), enabled toolsets, that profile's live feed. |
 | Session | Metadata, usage and cost, the message timeline with tool arguments and results. |
 | Scheduled jobs | Cron jobs across profiles with last/next run and failure streaks. |
@@ -116,6 +116,7 @@ login. `/healthz` and `/metrics` are open.
 | `GET` | `/api/agents/{profile}/runs/{run_id}`, `…/runs/{run_id}/stream` (SSE relay) |
 | `GET` | `/api/agents/{profile}/activity/stream` (SSE, BFF-generated) |
 | `GET` | `/api/jobs` |
+| `GET` | `/api/usage` (token/cost totals per profile, trailing 24h — ADR-022) |
 | `GET` | `/healthz`, `/metrics` |
 
 Errors always have the shape `{"code": "...", "message": "..."}`; upstream

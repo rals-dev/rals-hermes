@@ -47,7 +47,7 @@ per-instance and does not aggregate across profiles.
 | Replacing Grafana | The BFF exposes metrics to Prometheus; it does not duplicate Grafana |
 | Native mobile app | Responsive web is enough |
 | Kanban board data | No REST endpoint in Hermes; every integration path either mounts the Hermes data volume (which holds all profile `.env` files), adds a fourth Python service, or needs the Docker socket. Deferred to v2 — see ADR-006 |
-| Token *cost* and per-agent token aggregates | Requires joining usage with pricing and summing across every session on every request, which contradicts "no persistent state". v1 shows usage per session only — see ADR-007 |
+| Token *cost* and per-agent token aggregates | Requires joining usage with pricing and summing across every session on every request, which contradicts "no persistent state". v1 shows usage per session only — see ADR-007. (Revisited in v1.1: a *bounded, on-the-fly* per-profile aggregate — trailing 24h, no persistence — see ADR-022. Full-history aggregates are still out of scope.) |
 
 ### User
 
@@ -275,6 +275,7 @@ must be served from the same origin as the API (ADR-010, ADR-011).
 | `GET` | `/api/agents/{profile}/runs/{run_id}/stream` | SSE relay of the upstream run events |
 | `GET` | `/api/agents/{profile}/activity/stream` | **SSE produced by the BFF** from the session poller (see "Activity feed" below) |
 | `GET` | `/api/jobs` | Scheduled jobs aggregated across profiles |
+| `GET` | `/api/usage` | Token/cost totals per profile, on the fly, trailing 24h window — ADR-022 |
 | `GET` | `/healthz` | BFF liveness; no auth |
 | `GET` | `/metrics` | Prometheus exposition; no BFF auth — reachable only via the Traefik LAN entrypoint with an IP allow-list |
 
@@ -677,3 +678,13 @@ Run manually against a live Hermes before v1 is declared done; results go in
 Item 9 is the most important. A dashboard that accidentally starts agent runs
 would burn tokens, consume `max_concurrent_runs` quota, and break the very
 thing it is supposed to monitor.
+
+## 11. Post-v1 additions
+
+Changes made after v1 shipped (2026-09-20), too small to warrant a PRD
+revision but worth a one-line pointer here. Full rationale lives in the
+linked ADR.
+
+| Feature | Summary | ADR |
+| --- | --- | --- |
+| Usage monitoring | `GET /api/usage` + an Overview strip: token/cost totals per profile, on the fly, trailing 24h window. No persisted state — a rolling window instead of the "sum everything" ADR-007 deferred. | [ADR-022](decisions/022-usage-monitoring.md) |
