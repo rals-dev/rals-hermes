@@ -47,7 +47,7 @@ per-instance and does not aggregate across profiles.
 | Replacing Grafana | The BFF exposes metrics to Prometheus; it does not duplicate Grafana |
 | Native mobile app | Responsive web is enough |
 | Kanban board data | No REST endpoint in Hermes; every integration path either mounts the Hermes data volume (which holds all profile `.env` files), adds a fourth Python service, or needs the Docker socket. Deferred to v2 — see ADR-006 |
-| Token *cost* and per-agent token aggregates | Requires joining usage with pricing and summing across every session on every request, which contradicts "no persistent state". v1 shows usage per session only — see ADR-007 |
+| Token *cost* and per-agent token aggregates | Requires joining usage with pricing and summing across every session on every request, which contradicts "no persistent state". v1 shows usage per session only — see ADR-007. (Revisited in v1.1: a *bounded, on-the-fly* per-profile aggregate — trailing 24h, no persistence — see ADR-022. Full-history aggregates are still out of scope.) |
 
 ### User
 
@@ -275,6 +275,7 @@ must be served from the same origin as the API (ADR-010, ADR-011).
 | `GET` | `/api/agents/{profile}/runs/{run_id}/stream` | SSE relay of the upstream run events |
 | `GET` | `/api/agents/{profile}/activity/stream` | **SSE produced by the BFF** from the session poller (see "Activity feed" below) |
 | `GET` | `/api/jobs` | Scheduled jobs aggregated across profiles |
+| `GET` | `/api/usage` | Token/cost totals per profile, on the fly, trailing 24h window — ADR-022 |
 | `GET` | `/healthz` | BFF liveness; no auth |
 | `GET` | `/metrics` | Prometheus exposition; no BFF auth — reachable only via the Traefik LAN entrypoint with an IP allow-list |
 
@@ -687,3 +688,4 @@ linked ADR.
 | Feature | Summary | ADR |
 | --- | --- | --- |
 | Floor view (v1.1) | `/floor`: each profile illustrated as a worker at a station (idle/working/delegating/error/offline), with a line to whichever profile it's currently delegated to. Pure frontend, built from `/api/overview` and the existing activity streams — no BFF change. | [ADR-021](decisions/021-floor-view.md) |
+| Usage monitoring | `GET /api/usage` + an Overview strip: token/cost totals per profile, on the fly, trailing 24h window. No persisted state — a rolling window instead of the "sum everything" ADR-007 deferred. | [ADR-022](decisions/022-usage-monitoring.md) |

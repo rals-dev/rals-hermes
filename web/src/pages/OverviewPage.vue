@@ -5,6 +5,7 @@ import { api } from '@/api/client'
 import type { Overview } from '@/api/types'
 import { RouterLink } from 'vue-router'
 import GatewayStrip from '@/components/GatewayStrip.vue'
+import UsageStrip from '@/components/UsageStrip.vue'
 import AgentRow from '@/components/AgentRow.vue'
 import ActivityFeed from '@/components/ActivityFeed.vue'
 import ErrorState from '@/components/ErrorState.vue'
@@ -25,6 +26,7 @@ const busy = computed(() => (overview.data.value?.gateway?.active_agents ?? 0) >
     <ErrorState v-else-if="overview.isError.value" :error="overview.error.value" :retry="() => overview.refetch()" />
     <template v-else-if="overview.data.value">
       <GatewayStrip :gateway="overview.data.value.gateway" :generated-at="overview.data.value.generated_at" />
+      <UsageStrip />
 
       <div class="grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
         <section aria-label="Agents">

@@ -47,16 +47,18 @@ type Deps struct {
 
 // handlers holds the per-process state behind the routes.
 type handlers struct {
-	log       *slog.Logger
-	version   string
-	profiles  []*hermes.Client
-	byName    map[string]*hermes.Client
-	health    *cache.Cache[*hermes.HealthDetailed]
-	jobsCache *cache.Cache[*hermes.JobList]
-	sessions  *sessions
-	metrics   *observ.Metrics
-	activity  *activity.Hub
-	keepalive time.Duration
+	log        *slog.Logger
+	version    string
+	profiles   []*hermes.Client
+	byName     map[string]*hermes.Client
+	health     *cache.Cache[*hermes.HealthDetailed]
+	jobsCache  *cache.Cache[*hermes.JobList]
+	usageCache *cache.Cache[usageProfile]
+	sessions   *sessions
+	metrics    *observ.Metrics
+	activity   *activity.Hub
+	keepalive  time.Duration
+	now        func() time.Time
 }
 
 // NewHandler builds the root handler with all routes registered.
@@ -81,20 +83,23 @@ func NewHandler(d Deps) http.Handler {
 		sources = append(sources, c)
 	}
 	h := &handlers{
-		log:       d.Logger,
-		version:   d.Version,
-		profiles:  d.Profiles,
-		byName:    make(map[string]*hermes.Client, len(d.Profiles)),
-		health:    cache.New[*hermes.HealthDetailed](d.CacheTTL),
-		jobsCache: cache.New[*hermes.JobList](d.CacheTTL),
-		sessions:  newSessions(d.AuthKey, d.SessionTTL, d.now),
-		metrics:   d.Metrics,
-		activity:  activity.NewHub(d.Activity, sources, d.Logger),
-		keepalive: d.StreamKeepalive,
+		log:        d.Logger,
+		version:    d.Version,
+		profiles:   d.Profiles,
+		byName:     make(map[string]*hermes.Client, len(d.Profiles)),
+		health:     cache.New[*hermes.HealthDetailed](d.CacheTTL),
+		jobsCache:  cache.New[*hermes.JobList](d.CacheTTL),
+		usageCache: cache.New[usageProfile](usageCacheTTL),
+		sessions:   newSessions(d.AuthKey, d.SessionTTL, d.now),
+		metrics:    d.Metrics,
+		activity:   activity.NewHub(d.Activity, sources, d.Logger),
+		keepalive:  d.StreamKeepalive,
+		now:        d.now,
 	}
 	if h.metrics != nil {
 		h.metrics.RegisterCache("health", h.health.Stats)
 		h.metrics.RegisterCache("jobs", h.jobsCache.Stats)
+		h.metrics.RegisterCache("usage", h.usageCache.Stats)
 		h.activity.SetGauge(h.metrics)
 	}
 	for _, c := range d.Profiles {
@@ -127,6 +132,7 @@ func NewHandler(d Deps) http.Handler {
 	r.handle("GET /api/agents/{profile}/runs/{run_id}/stream", auth(h.runStream))
 	r.handle("GET /api/agents/{profile}/activity/stream", auth(h.activityStream))
 	r.handle("GET /api/jobs", auth(h.jobs))
+	r.handle("GET /api/usage", auth(h.usage))
 	return requestLog(d.Logger, h.metrics, r)
 }
 

@@ -26,3 +26,4 @@ One file per decision, numbered in the order they were taken during the
 | 019 | [Milestones M0–M4, test-first, one commit per ticket on main](019-milestones-and-workflow.md) |
 | 020 | [Everything in the repository is written in English](020-english-everywhere.md) |
 | 021 | [Floor view — agents illustrated as workers](021-floor-view.md) |
+| 022 | [Per-agent usage monitoring — on-the-fly, no persisted state](022-usage-monitoring.md) |
