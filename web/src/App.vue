@@ -31,6 +31,7 @@ const navClass = (name: string) =>
         </RouterLink>
         <nav aria-label="Primary" class="flex items-stretch gap-5">
           <RouterLink to="/" class="flex items-center border-b-2 no-underline transition-colors" :class="navClass('overview')">Overview</RouterLink>
+          <RouterLink to="/floor" class="flex items-center border-b-2 no-underline transition-colors" :class="navClass('floor')">Floor</RouterLink>
           <RouterLink to="/jobs" class="flex items-center border-b-2 no-underline transition-colors" :class="navClass('jobs')">Scheduled jobs</RouterLink>
         </nav>
         <button type="button" class="ml-auto text-muted hover:text-ink" @click="logout">Sign out</button>

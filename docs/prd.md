@@ -687,4 +687,5 @@ linked ADR.
 
 | Feature | Summary | ADR |
 | --- | --- | --- |
+| Floor view (v1.1) | `/floor`: each profile illustrated as a worker at a station (idle/working/delegating/error/offline), with a line to whichever profile it's currently delegated to. Pure frontend, built from `/api/overview` and the existing activity streams — no BFF change. | [ADR-021](decisions/021-floor-view.md) |
 | Usage monitoring | `GET /api/usage` + an Overview strip: token/cost totals per profile, on the fly, trailing 24h window. No persisted state — a rolling window instead of the "sum everything" ADR-007 deferred. | [ADR-022](decisions/022-usage-monitoring.md) |

@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
 import { api } from '@/api/client'
 import type { Overview } from '@/api/types'
+import { RouterLink } from 'vue-router'
 import GatewayStrip from '@/components/GatewayStrip.vue'
 import UsageStrip from '@/components/UsageStrip.vue'
 import AgentRow from '@/components/AgentRow.vue'
@@ -34,7 +35,10 @@ const busy = computed(() => (overview.data.value?.gateway?.active_agents ?? 0) >
               <span v-if="busy" class="text-amber">An agent is working</span>
               <span v-else>All agents idle</span>
             </h1>
-            <span class="text-faint">{{ overview.data.value.agents.length }} profiles</span>
+            <span class="text-faint">
+              {{ overview.data.value.agents.length }} profiles ·
+              <RouterLink to="/floor" class="text-amber hover:underline">Floor →</RouterLink>
+            </span>
           </header>
           <ul role="list" class="panel divide-y divide-line overflow-hidden">
             <AgentRow v-for="a in overview.data.value.agents" :key="a.profile" :agent="a" />
