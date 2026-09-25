@@ -677,3 +677,13 @@ Run manually against a live Hermes before v1 is declared done; results go in
 Item 9 is the most important. A dashboard that accidentally starts agent runs
 would burn tokens, consume `max_concurrent_runs` quota, and break the very
 thing it is supposed to monitor.
+
+## 11. Post-v1 additions
+
+Changes made after v1 shipped (2026-09-20), too small to warrant a PRD
+revision but worth a one-line pointer here. Full rationale lives in the
+linked ADR.
+
+| Feature | Summary | ADR |
+| --- | --- | --- |
+| Floor view (v1.1) | `/floor`: each profile illustrated as a worker at a station (idle/working/delegating/error/offline), with a line to whichever profile it's currently delegated to. Pure frontend, built from `/api/overview` and the existing activity streams — no BFF change. | [ADR-021](decisions/021-floor-view.md) |
