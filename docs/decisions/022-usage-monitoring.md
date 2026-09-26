@@ -6,8 +6,8 @@ Date: 2026-09-22 · Status: Accepted
 
 ADR-007 deferred per-agent token/cost aggregates because computing them
 looked like it required either summing every session on every request or
-persisting state, and "no database" is a standing constraint (ADR-014's
-spirit: standard library first, minimal moving parts). The operator asked
+persisting state, and "no persistent state" is a standing constraint (PRD
+§ 1, Non-Goals). The operator asked
 whether Hermes already does this monitoring — it doesn't, at the
 aggregate level — and, given the choice between an on-the-fly aggregate
 and a persisted time series, chose on-the-fly.

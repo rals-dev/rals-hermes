@@ -27,3 +27,4 @@ One file per decision, numbered in the order they were taken during the
 | 020 | [Everything in the repository is written in English](020-english-everywhere.md) |
 | 021 | [Floor view — agents illustrated as workers](021-floor-view.md) |
 | 022 | [Per-agent usage monitoring — on-the-fly, no persisted state](022-usage-monitoring.md) |
+| 023 | [Office view — agents walking around a 2D pixel-art office](023-office-view.md) |

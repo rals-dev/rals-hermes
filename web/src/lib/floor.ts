@@ -23,6 +23,8 @@ export interface DelegationLink {
   childProfile: string
   parentSessionId: string
   childSessionId: string
+  /** Child session's start (ms since epoch) — lets a view pick the most recent child. */
+  childStartedAt: number
 }
 
 export interface Worker {
@@ -37,6 +39,9 @@ export interface Worker {
   helperCount?: number
   openSessions: number
   toolCallsRecent: number
+  /** Latest activity seen for this profile (ms since epoch), from session
+   *  last_active and feed rows; null when nothing is known. */
+  lastActiveAt: number | null
 }
 
 export interface FloorState {
@@ -44,7 +49,7 @@ export interface FloorState {
   links: DelegationLink[]
 }
 
-const WORKING_WINDOW_MS = 60_000
+export const WORKING_WINDOW_MS = 60_000
 const ERROR_WINDOW_MS = 30_000
 const RECENT_TOOL_WINDOW_MS = 10 * 60_000
 
@@ -83,6 +88,7 @@ export function deriveFloor(
       childProfile: s.profile,
       parentSessionId: parent.id,
       childSessionId: s.id,
+      childStartedAt: Date.parse(s.started_at),
     })
     delegatingProfiles.add(parent.profile)
   }
@@ -107,9 +113,18 @@ export function deriveFloor(
     }
   }
 
+  const lastActive = new Map<string, number>()
+  const noteActivity = (profile: string, iso: string) => {
+    const t = Date.parse(iso)
+    if (Number.isNaN(t)) return
+    if (t > (lastActive.get(profile) ?? -Infinity)) lastActive.set(profile, t)
+  }
+  for (const r of rows) noteActivity(r.profile, r.at)
+
   const openSessions = new Map<string, number>()
   const recentlyActive = new Set<string>()
   for (const s of sessions.values()) {
+    noteActivity(s.profile, s.last_active)
     if (!s.open) continue
     openSessions.set(s.profile, (openSessions.get(s.profile) ?? 0) + 1)
     const age = nowMs - Date.parse(s.last_active)
@@ -132,6 +147,7 @@ export function deriveFloor(
       helperCount: helperCounts.get(a.profile),
       openSessions: openSessions.get(a.profile) ?? 0,
       toolCallsRecent: toolCallsRecent.get(a.profile) ?? 0,
+      lastActiveAt: lastActive.get(a.profile) ?? null,
     }
   })
 

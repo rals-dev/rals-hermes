@@ -14,7 +14,7 @@ import (
 // Hermes has no date filter on GET /api/sessions and no known retention
 // limit (T-003 § 3), so summing "everything" would mean paginating an
 // unbounded, ever-growing history on every cache miss. A rolling window
-// keeps the aggregation bounded by recent activity instead — see ADR-021.
+// keeps the aggregation bounded by recent activity instead — see ADR-022.
 const usageWindow = 24 * time.Hour
 
 // usagePageLimit and usageMaxPages bound how many sessions one profile's
@@ -52,7 +52,7 @@ type usageResponse struct {
 
 // usage aggregates GET /api/usage across every profile: token and cost
 // totals over the trailing usageWindow, on the fly, with no persisted
-// state (ADR-007, ADR-021). A dead profile contributes an entry to errors
+// state (ADR-007, ADR-022). A dead profile contributes an entry to errors
 // instead of failing the response, matching jobs/overview.
 func (h *handlers) usage(w http.ResponseWriter, r *http.Request) {
 	type result struct {
