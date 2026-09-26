@@ -62,16 +62,22 @@ function withPixels(px: Array<[row: number, col: number, ch: string]>): string[]
 
 // Seated figure, facing forward: 3 rows of headroom for accessories, then
 // hair/face/neck/torso. Arms are never in BASE — every pose supplies them.
-const BASE: string[] = [
-  '.'.repeat(spriteCols), // 0  headroom
-  '.'.repeat(spriteCols), // 1  headroom
-  '.'.repeat(spriteCols), // 2  headroom
+/** Rows 0–2 of every figure: headroom for accessories ("!", a phone). */
+export const HEADROOM: readonly string[] = ['.'.repeat(spriteCols), '.'.repeat(spriteCols), '.'.repeat(spriteCols)]
+
+/** Rows 3–8: the front-facing head, shared with the office view's standing figures. */
+export const HEAD: readonly string[] = [
   '....hhhhhh....', // 3  hair top
   '...hffffffh...', // 4  hair sides
   '...hfeffefh...', // 5  eyes
   '...hffffffh...', // 6  cheeks
   '....ffffff....', // 7  jaw
   '.....ffff.....', // 8  neck
+]
+
+const BASE: string[] = [
+  ...HEADROOM,
+  ...HEAD,
   '..SSSSSSSSSS..', // 9  shoulders
   '..SSSSSSSSSS..', // 10 torso
   '..SSSSSSSSSS..', // 11 torso
