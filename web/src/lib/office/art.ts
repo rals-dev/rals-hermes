@@ -161,6 +161,12 @@ export type Shape = readonly [number, number, number, number, string]
 /** The monitor screen on a desk, relative to the desk — repainted live (on/off/error). */
 export const MONITOR_SCREEN: Shape = [2, -7, 6, 6, 'screenOff']
 
+/**
+ * The desk chair, relative to the desk, drawn separately so it sorts
+ * *behind* a seated agent while the desk itself sorts in front.
+ */
+export const DESK_CHAIR: readonly Shape[] = [[10, -12, 12, 10, 'chair'], [10, -3, 12, 2, 'chairDark']]
+
 const BOOKS = ['book1', 'book2', 'book3', 'book4', 'book5']
 
 export function furnitureShapes(kind: FurnitureKind, w: number, h: number): Shape[] {
@@ -169,7 +175,6 @@ export function furnitureShapes(kind: FurnitureKind, w: number, h: number): Shap
   switch (kind) {
     case 'desk':
       return [
-        [10, -12, 12, 10, 'chair'], [10, -3, 12, 2, 'chairDark'], // empty chair; hidden behind a seated agent
         [0, 0, 32, 11, 'deskTop'], [0, 10, 32, 1, 'deskEdge'], [0, 11, 32, 3, 'deskFront'],
         [1, 14, 2, 2, 'deskLeg'], [29, 14, 2, 2, 'deskLeg'],
         [4, 1, 2, 3, 'monitorStand'], [1, -8, 8, 9, 'monitor'], MONITOR_SCREEN,

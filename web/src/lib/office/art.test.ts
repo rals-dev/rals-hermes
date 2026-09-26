@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { HELPER, characterFrames, furnitureShapes, mirror, officePalette, spritePalette } from './art'
+import { DESK_CHAIR, HELPER, characterFrames, furnitureShapes, mirror, officePalette, spritePalette } from './art'
 import { spriteCols, spriteRows } from '../sprites'
 import { TILE, officeMap } from './map'
 
@@ -69,6 +69,16 @@ describe('furnitureShapes', () => {
         expect(y + h, where).toBeLessThanOrEqual(f.h * TILE)
         expect(color in officePalette, where).toBe(true)
       }
+    }
+  })
+
+  it('keep the desk chair on the seat row, above the desk', () => {
+    for (const [x, y, w, h, color] of DESK_CHAIR) {
+      expect(x).toBeGreaterThanOrEqual(0)
+      expect(x + w).toBeLessThanOrEqual(2 * TILE)
+      expect(y).toBeGreaterThanOrEqual(-TILE)
+      expect(y + h).toBeLessThanOrEqual(0)
+      expect(color in officePalette).toBe(true)
     }
   })
 })
