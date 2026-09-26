@@ -82,3 +82,22 @@ describe('furnitureShapes', () => {
     }
   })
 })
+
+describe('night control room', () => {
+  it('uses the ADR-024 environment palette', () => {
+    expect(officePalette).toMatchObject({
+      floor: '#26221f', wallFace: '#1f1c1a', windowSky: '#1a2433', deskTop: '#4a3a2f',
+      screenOn: '#e8a73a', screenError: '#e25b4a', screenOff: '#2a2624', rugInner: '#7a3f30', lamp: '#f3d27a',
+    })
+  })
+
+  it('outlines every free-standing piece of furniture', () => {
+    const flat = new Set(['window', 'whiteboard', 'rug', 'glass'])
+    for (const f of officeMap.furniture) {
+      if (flat.has(f.kind)) continue
+      const colours = furnitureShapes(f.kind, f.w, f.h).map((s) => s[4])
+      expect(colours, f.kind).toContain('outline')
+    }
+  })
+})
+

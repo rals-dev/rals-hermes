@@ -50,18 +50,15 @@ export function drawBackground(ctx: CanvasRenderingContext2D, m: OfficeMap): voi
         fill(officePalette.carpetSeam!, x, y + TILE - 1, TILE, 1)
         continue
       }
-      // Wood planks: 4 px bands with staggered end joints.
+      // Charcoal floor tiles with 1 px seams and the odd fleck.
       fill(officePalette.floor!, x, y, TILE, TILE)
-      for (let band = 0; band < 4; band++) {
-        fill(officePalette.floorSeam!, x, y + band * 4 + 3, TILE, 1)
-        const joint = ((ty * 4 + band) * 7 + tx * 3) % TILE
-        fill(officePalette.floorSeam!, x + joint, y + band * 4, 1, 3)
-        fill(officePalette.floorLight!, x + ((joint + 8) % TILE), y + band * 4, 1, 1)
-      }
+      fill(officePalette.floorSeam!, x, y + TILE - 1, TILE, 1)
+      fill(officePalette.floorSeam!, x + TILE - 1, y, 1, TILE)
+      if ((tx * 7 + ty * 3) % 5 === 0) fill(officePalette.floorFleck!, x + 5, y + 6, 1, 1)
     }
   }
 
-  // Walls: a dark cap all round, a lit face along the top.
+  // Walls: a dark cap all round, a dark face along the top.
   fill(officePalette.wallCap!, 0, 0, MAP_W, TILE)
   fill(officePalette.wallFace!, TILE, TILE, MAP_W - 2 * TILE, TILE)
   fill(officePalette.wallBase!, TILE, 2 * TILE - 3, MAP_W - 2 * TILE, 3)
@@ -78,6 +75,19 @@ export function drawBackground(ctx: CanvasRenderingContext2D, m: OfficeMap): voi
   for (const f of m.furniture) {
     if (BACKGROUND_KINDS.has(f.kind)) drawShapes(ctx, f.x * TILE, f.y * TILE, furnitureShapes(f.kind, f.w, f.h))
   }
+
+  // The lounge lamp's glow, painted once: a warm pool on the rug.
+  ctx.fillStyle = officePalette.lamp!
+  ctx.globalAlpha = 0.1
+  for (const f of m.furniture) {
+    if (f.kind !== 'lamp') continue
+    for (const r of [40, 22]) {
+      ctx.beginPath()
+      ctx.arc(f.x * TILE + TILE / 2, (f.y + 2) * TILE, r, 0, Math.PI * 2)
+      ctx.fill()
+    }
+  }
+  ctx.globalAlpha = 1
 }
 
 export function drawScene(
@@ -112,8 +122,15 @@ export function drawScene(
         const [sx, sy, sw, sh] = MONITOR_SCREEN
         ctx.fillStyle = officePalette[view.screen === 'on' ? 'screenOn' : view.screen === 'error' ? 'screenError' : 'screenOff']!
         ctx.fillRect(x + sx, y + sy, sw, sh)
+        if (view.screen !== 'off') {
+          // A lit screen spills onto the desk's left half (ADR-024: 18 %).
+          ctx.globalAlpha = 0.18
+          ctx.fillRect(x + 1, y + 1, 15, 9)
+          ctx.globalAlpha = 1
+        }
       },
     })
+
     if (view.shirt && view.helpers > 0) {
       items.push({
         bottom: y, order: 1,

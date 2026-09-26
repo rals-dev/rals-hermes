@@ -134,91 +134,90 @@ export function characterFrames(v: CharacterView): string[][] {
   }
 }
 
-// ── Office colours ─────────────────────────────────────────────────────
+// ── Office colours: the "night control room" (docs/decisions/024) ──────
 export const officePalette: Record<string, string> = {
-  floor: '#caa67f', floorSeam: '#b58f69', floorLight: '#d6b48e',
-  carpet: '#8ea3b7', carpetSeam: '#7f94a8',
-  wallCap: '#3a3844', wallFace: '#e8ddcc', wallBase: '#8b7a66', mat: '#6b5a48',
-  deskTop: '#b07a4c', deskEdge: '#8c5c36', deskFront: '#6f4629', deskLeg: '#4b2f1c',
-  monitor: '#2b2d33', monitorStand: '#555a63', screenOff: '#1b252c', screenOn: '#79d4f2', screenError: '#e2483a',
-  keyboard: '#d9d6cf',
-  chair: '#3f4c63', chairDark: '#2c3647',
-  sofa: '#5b7db0', sofaDark: '#46628f', sofaLight: '#7596c6',
-  tableTop: '#9c6a42', tableEdge: '#7a5133',
-  machine: '#3b3b3f', machineAccent: '#c0473a', cup: '#f3efe7',
-  pot: '#b8662a', potDark: '#8f4d1c', leaf: '#4f9d4a', leafDark: '#3a7a36', leafLight: '#6fbf62',
-  shelf: '#7a4e2d', shelfDark: '#5c3a21',
-  book1: '#c0473a', book2: '#2f7fc1', book3: '#e0b52c', book4: '#3a9d5d', book5: '#8b54b0',
-  glass: 'rgba(185, 222, 238, 0.55)', glassFrame: '#9aa7b0',
-  board: '#f4f3ee', boardFrame: '#9a9a9a', marker1: '#3f78d0', marker2: '#d2584a',
-  windowFrame: '#6b5a48', windowGlass: '#9fd3e6', windowShine: '#dff3f9',
-  rug: '#b95a4d', rugInner: '#cf7766', rugPattern: '#e0a07f',
+  outline: '#0f0d0c',
+  floor: '#26221f', floorSeam: '#2e2a27', floorFleck: '#2a2623',
+  carpet: '#23262b', carpetSeam: '#2a2d33',
+  wallCap: '#141211', wallFace: '#1f1c1a', wallBase: '#3a3532', mat: '#3a3532',
+  windowFrame: '#3a3532', windowSky: '#1a2433', cityLight: '#e8a73a', star: '#a69c90',
+  deskTop: '#4a3a2f', deskHighlight: '#5c483a', deskFront: '#33281f',
+  monitor: '#151312', screenOff: '#2a2624', screenOn: '#e8a73a', screenError: '#e25b4a',
+  keyboard: '#6e665d',
+  chair: '#3a3532', chairHighlight: '#4d4742',
+  sofa: '#4b4f5c', sofaHighlight: '#5c6170',
+  tableTop: '#4a3a2f', tableFront: '#33281f', cup: '#ede6dc',
+  machine: '#2b2826', led: '#e25b4a',
+  pot: '#5c3a21', leaf: '#3f6b43', leafHighlight: '#57865a',
+  shelf: '#33281f', shelfBack: '#26201a',
+  book1: '#7a3f30', book2: '#5b7fae', book3: '#b57d22', book4: '#468a4d', book5: '#6e665d',
+  glass: 'rgba(127, 167, 217, 0.12)', glassFrame: '#4d4742',
+  boardFrame: '#3a3532', board: '#2e2a27', boardLine: '#6e665d', boardMark: '#e8a73a',
+  rug: '#5c2f24', rugInner: '#7a3f30', rugPattern: '#a0563f',
+  lamp: '#f3d27a',
 }
 
 /** [x, y, w, h, colour] in pixels from the piece's top-left tile; y may go up to one tile above. */
 export type Shape = readonly [number, number, number, number, string]
 
 /** The monitor screen on a desk, relative to the desk — repainted live (on/off/error). */
-export const MONITOR_SCREEN: Shape = [2, -7, 6, 6, 'screenOff']
+export const MONITOR_SCREEN: Shape = [2, -7, 5, 5, 'screenOff']
 
 /**
  * The desk chair, relative to the desk, drawn separately so it sorts
  * *behind* a seated agent while the desk itself sorts in front.
  */
-export const DESK_CHAIR: readonly Shape[] = [[10, -12, 12, 10, 'chair'], [10, -3, 12, 2, 'chairDark']]
+export const DESK_CHAIR: readonly Shape[] = [[9, -13, 14, 12, 'outline'], [10, -12, 12, 10, 'chair'], [10, -12, 12, 2, 'chairHighlight']]
 
 const BOOKS = ['book1', 'book2', 'book3', 'book4', 'book5']
 
+// Every free-standing piece starts with an outline rectangle and is filled
+// one pixel inside it, so pieces read as objects on the dark floor.
 export function furnitureShapes(kind: FurnitureKind, w: number, h: number): Shape[] {
   const W = w * 16
   const H = h * 16
   switch (kind) {
     case 'desk':
       return [
-        [0, 0, 32, 11, 'deskTop'], [0, 10, 32, 1, 'deskEdge'], [0, 11, 32, 3, 'deskFront'],
-        [1, 14, 2, 2, 'deskLeg'], [29, 14, 2, 2, 'deskLeg'],
-        [4, 1, 2, 3, 'monitorStand'], [1, -8, 8, 9, 'monitor'], MONITOR_SCREEN,
+        [0, 0, 32, 14, 'outline'], [1, 1, 30, 9, 'deskTop'], [1, 1, 30, 1, 'deskHighlight'], [1, 10, 30, 3, 'deskFront'],
+        [1, 14, 3, 2, 'outline'], [28, 14, 3, 2, 'outline'],
+        [3, 1, 3, 3, 'outline'], [0, -9, 9, 10, 'outline'], [1, -8, 7, 8, 'monitor'], MONITOR_SCREEN,
         [12, 3, 9, 2, 'keyboard'],
       ]
     case 'sofa':
       return [
-        [0, -6, W, 8, 'sofaDark'], [2, 2, W - 4, 9, 'sofa'], [2, 11, W - 4, 2, 'sofaDark'],
-        [0, 0, 4, 13, 'sofaDark'], [W - 4, 0, 4, 13, 'sofaDark'],
-        ...Array.from({ length: w - 1 }, (_, i): Shape => [(i + 1) * 16 - 1, 3, 1, 7, 'sofaDark']),
-        ...Array.from({ length: w }, (_, i): Shape => [i * 16 + 4, 3, 9, 2, 'sofaLight']),
+        [0, -7, W, 21, 'outline'], [1, -6, W - 2, 8, 'sofa'], [2, 2, W - 4, 10, 'sofaHighlight'], [1, 12, W - 2, 1, 'sofa'],
+        ...Array.from({ length: w - 1 }, (_, i): Shape => [(i + 1) * 16, 3, 1, 8, 'sofa']),
       ]
     case 'coffeeTable':
-      return [
-        [2, 3, W - 4, 8, 'tableTop'], [2, 11, W - 4, 2, 'tableEdge'],
-        [3, 13, 2, 3, 'tableEdge'], [W - 5, 13, 2, 3, 'tableEdge'],
-        [8, 5, 3, 3, 'cup'], [W - 12, 4, 6, 4, 'book2'],
-      ]
+      return [[1, 2, 30, 12, 'outline'], [2, 3, 28, 8, 'tableTop'], [2, 11, 28, 2, 'tableFront'], [8, 5, 3, 3, 'cup'], [W - 12, 4, 6, 4, 'book2']]
     case 'coffeeMachine':
-      return [[3, -6, 10, 20, 'machine'], [5, -3, 6, 3, 'machineAccent'], [7, 4, 2, 2, 'monitorStand'], [6, 8, 4, 4, 'cup']]
+      return [[2, -7, 12, 22, 'outline'], [3, -6, 10, 20, 'machine'], [5, -3, 2, 2, 'led'], [6, 8, 4, 4, 'cup']]
+    case 'lamp':
+      return [[6, -9, 4, 24, 'outline'], [7, -8, 2, 22, 'machine'], [3, -13, 10, 7, 'outline'], [4, -12, 8, 5, 'lamp'], [4, 13, 8, 3, 'outline']]
     case 'plant':
       return [
-        [3, -8, 10, 8, 'leaf'], [1, -4, 5, 5, 'leafDark'], [10, -5, 5, 6, 'leafDark'], [6, -10, 4, 4, 'leafLight'],
-        [5, -2, 6, 4, 'leaf'], [4, 2, 8, 10, 'pot'], [3, 2, 10, 2, 'potDark'], [4, 10, 8, 2, 'potDark'],
+        [2, -9, 12, 11, 'outline'], [3, -8, 10, 9, 'leaf'], [6, -10, 4, 3, 'leafHighlight'], [1, -4, 4, 5, 'leafHighlight'],
+        [3, 2, 10, 11, 'outline'], [4, 3, 8, 9, 'pot'],
       ]
     case 'bookshelf': {
-      const shapes: Shape[] = [[0, -12, W, 26, 'shelf'], [2, -10, W - 4, 7, 'shelfDark'], [2, -1, W - 4, 7, 'shelfDark']]
+      const shapes: Shape[] = [[0, -13, W, 28, 'outline'], [1, -12, W - 2, 26, 'shelf'], [2, -10, W - 4, 7, 'shelfBack'], [2, -1, W - 4, 7, 'shelfBack']]
       for (const top of [-10, -1]) {
         for (let x = 3, i = top === -10 ? 0 : 2; x + 3 <= W - 3; x += 4, i++) {
           const short = i % 3 === 1
           shapes.push([x, top + (short ? 1 : 0), 3, short ? 6 : 7, BOOKS[i % BOOKS.length]!])
         }
       }
-      shapes.push([0, 14, W, 2, 'shelfDark'])
       return shapes
     }
     case 'meetingTable':
       return [
-        [0, 4, W, H - 10, 'tableTop'], [0, H - 6, W, 3, 'tableEdge'],
-        [2, H - 3, 3, 3, 'tableEdge'], [W - 5, H - 3, 3, 3, 'tableEdge'],
-        [10, 10, 8, 6, 'board'], [W - 24, 12, 7, 5, 'board'], [W / 2 - 2, 14, 3, 3, 'cup'],
+        [0, 3, W, H - 5, 'outline'], [1, 4, W - 2, H - 11, 'tableTop'], [1, H - 7, W - 2, 3, 'tableFront'],
+        [2, H - 3, 3, 3, 'outline'], [W - 5, H - 3, 3, 3, 'outline'],
+        [10, 10, 8, 6, 'cup'], [W - 24, 12, 7, 5, 'cup'], [W / 2 - 2, 14, 3, 3, 'cup'],
       ]
     case 'chair':
-      return [[3, 2, 10, 3, 'chairDark'], [3, 5, 10, 7, 'chair'], [4, 12, 2, 2, 'chairDark'], [10, 12, 2, 2, 'chairDark']]
+      return [[2, 1, 12, 13, 'outline'], [3, 2, 10, 3, 'chairHighlight'], [3, 5, 10, 7, 'chair'], [3, 14, 2, 2, 'outline'], [11, 14, 2, 2, 'outline']]
     case 'glass':
       if (h === 1) {
         return [
@@ -230,13 +229,14 @@ export function furnitureShapes(kind: FurnitureKind, w: number, h: number): Shap
     case 'whiteboard':
       return [
         [2, 1, W - 4, 12, 'boardFrame'], [3, 2, W - 6, 10, 'board'],
-        [6, 4, 14, 1, 'marker1'], [6, 7, 20, 1, 'marker1'], [W - 20, 5, 10, 1, 'marker2'], [W - 20, 8, 6, 1, 'marker2'],
+        [6, 4, 14, 1, 'boardLine'], [6, 7, 20, 1, 'boardLine'], [W - 20, 5, 10, 1, 'boardMark'],
         [8, 13, W - 16, 1, 'boardFrame'],
       ]
     case 'window':
       return [
-        [2, 1, W - 4, 12, 'windowFrame'], [3, 2, W / 2 - 4, 10, 'windowGlass'], [W / 2 + 1, 2, W / 2 - 4, 10, 'windowGlass'],
-        [4, 3, 3, 5, 'windowShine'], [W / 2 + 2, 3, 3, 5, 'windowShine'],
+        [2, 1, W - 4, 12, 'windowFrame'], [3, 2, W / 2 - 4, 10, 'windowSky'], [W / 2 + 1, 2, W / 2 - 4, 10, 'windowSky'],
+        [5, 9, 1, 1, 'cityLight'], [8, 10, 1, 1, 'cityLight'], [W / 2 + 4, 8, 1, 1, 'cityLight'], [W / 2 + 9, 10, 1, 1, 'cityLight'],
+        [6, 4, 1, 1, 'star'], [W / 2 + 6, 3, 1, 1, 'star'], [11, 5, 1, 1, 'star'],
       ]
     case 'rug':
       return [
@@ -246,3 +246,4 @@ export function furnitureShapes(kind: FurnitureKind, w: number, h: number): Shap
       ]
   }
 }
+
