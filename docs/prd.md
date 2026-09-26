@@ -689,3 +689,4 @@ linked ADR.
 | --- | --- | --- |
 | Floor view (v1.1) | `/floor`: each profile illustrated as a worker at a station (idle/working/delegating/error/offline), with a line to whichever profile it's currently delegated to. Pure frontend, built from `/api/overview` and the existing activity streams — no BFF change. | [ADR-021](decisions/021-floor-view.md) |
 | Usage monitoring | `GET /api/usage` + an Overview strip: token/cost totals per profile, on the fly, trailing 24h window. No persisted state — a rolling window instead of the "sum everything" ADR-007 deferred. | [ADR-022](decisions/022-usage-monitoring.md) |
+| Office view | A Grid \| Office toggle on `/floor`: agents as pixel-art characters who sit at their desk while working, stand at a colleague's desk while delegating to them, and move to the lounge after two idle minutes. Hand-written canvas renderer, no new dependency, no backend change. | [ADR-023](decisions/023-office-view.md) |
