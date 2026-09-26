@@ -9,7 +9,9 @@
 // seated agent covers their own chair.
 
 import type { WorkerState } from '../floor'
-import { DESK_CHAIR, HELPER, MONITOR_SCREEN, characterFrames, furnitureShapes, officePalette, spritePalette, type Shape } from './art'
+import { agentFrame, frameAt, groundRow, helperFrame } from '../agents/compose'
+import type { Persona } from '../agents/personas'
+import { DESK_CHAIR, MONITOR_SCREEN, furnitureShapes, officePalette, officePose, type Shape } from './art'
 import { COLS, ROWS, TILE, type Furniture, type OfficeMap } from './map'
 import type { Actor } from './motion'
 
@@ -24,15 +26,16 @@ export interface DeskView {
   screen: 'off' | 'on' | 'error'
   /** Same-profile sub-agents to draw beside the desk (the view caps this at 3). */
   helpers: number
-  /** Owner's shirt colour, for the helpers; null for an unassigned desk. */
-  shirt: string | null
+  /** The desk owner's persona, for the helpers; null for an unassigned desk. */
+  owner: Persona | null
 }
 
 export interface ActorView {
   actor: Actor
   state: WorkerState
-  shirt: string
+  persona: Persona
 }
+
 
 export function drawBackground(ctx: CanvasRenderingContext2D, m: OfficeMap): void {
   const fill = (color: string, x: number, y: number, w: number, h: number) => {
@@ -131,13 +134,12 @@ export function drawScene(
       },
     })
 
-    if (view.shirt && view.helpers > 0) {
+    if (view.owner && view.helpers > 0) {
+      const helper = helperFrame(view.owner)
       items.push({
         bottom: y, order: 1,
         draw: () => {
-          for (let i = 0; i < Math.min(view.helpers, 3); i++) {
-            drawGrid(ctx, HELPER, x - 7 * (i + 1), y - HELPER.length, view.shirt!)
-          }
+          for (let i = 0; i < Math.min(view.helpers, 3); i++) ctx.drawImage(helper, x - 9 * (i + 1), y - helper.height)
         },
       })
     }
@@ -155,11 +157,12 @@ export function drawScene(
 
 function drawActor(ctx: CanvasRenderingContext2D, a: ActorView, x: number, y: number, nowMs: number, still: boolean): void {
   const walking = a.actor.waypoints.length > 0
-  const frames = characterFrames({ walking, facing: a.actor.facing, pose: a.actor.pose, state: a.state })
-  const period = walking ? 125 : 200 // 8 fps stride, 5 fps idle animations
-  const frame = still ? frames[0]! : frames[Math.floor(nowMs / period) % frames.length]!
-  // The 14×17 sprite stands in the 16×16 box: centred, feet on the box's bottom edge.
-  drawGrid(ctx, frame, x + 1, y + TILE - frame.length, a.shirt)
+  const { pose, mirrored } = officePose({ walking, facing: a.actor.facing, pose: a.actor.pose, state: a.state })
+  const frame = still ? 0 : frameAt(pose, nowMs)
+  // The 16-wide figure fills its 16 px box, its ground row on the box's bottom
+  // edge: a standing head rises 8 px into the row above; a seated waist meets
+  // the desk top.
+  ctx.drawImage(agentFrame(a.persona, pose, frame, mirrored), x, y + TILE - groundRow(pose))
 }
 
 function drawFurniture(ctx: CanvasRenderingContext2D, f: Furniture): void {
@@ -173,14 +176,3 @@ function drawShapes(ctx: CanvasRenderingContext2D, ox: number, oy: number, shape
   }
 }
 
-function drawGrid(ctx: CanvasRenderingContext2D, grid: readonly string[], ox: number, oy: number, shirt: string): void {
-  for (let r = 0; r < grid.length; r++) {
-    const row = grid[r]!
-    for (let c = 0; c < row.length; c++) {
-      const ch = row[c]!
-      if (ch === '.') continue
-      ctx.fillStyle = ch === 'S' ? shirt : spritePalette[ch] ?? '#000'
-      ctx.fillRect(ox + c, oy + r, 1, 1)
-    }
-  }
-}

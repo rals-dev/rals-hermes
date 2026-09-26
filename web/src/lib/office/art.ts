@@ -1,103 +1,13 @@
-// Hand-authored pixel art for the /floor Office view (docs/decisions/023).
-// Characters reuse the grid view's head, palette and per-profile shirt
-// colour (src/lib/sprites.ts) so an agent looks the same in both views;
-// what's new here is the standing body, walk cycles in four directions
-// (left is the mirror of right), a talking gesture for visitors, and a
-// small helper figure. Furniture is a list of flat rectangles per piece —
-// deliberately simple "programmer art", in full colour like the sprites.
+// Pixel art for the /floor Office view: the "night control room"
+// environment (docs/decisions/024) — outlined furniture in the dashboard's
+// palette, monitors as the light sources — and the mapping from an actor's
+// state to the agent pose drawn for it. The agents themselves live in
+// src/lib/agents/, shared with the grid view.
 
 import type { WorkerState } from '../floor'
-import { HEAD, HEADROOM, framesFor, palette, type Pose } from '../sprites'
+import { seatedPoseFor, type Pose } from '../agents/compose'
 import type { FurnitureKind } from './map'
 import type { Facing, Stance } from './motion'
-
-/** Sprite palette: the grid view's, plus trousers. 'S' (shirt) stays per-profile. */
-export const spritePalette: Record<string, string> = { ...palette, n: '#3a4a6b' }
-
-export function mirror(grid: readonly string[]): string[] {
-  return grid.map((row) => [...row].reverse().join(''))
-}
-
-function withRows(base: readonly string[], rows: Record<number, string>): string[] {
-  return base.map((row, i) => rows[i] ?? row)
-}
-
-// ── Front (walking towards the viewer) ─────────────────────────────────
-const STAND_FRONT: string[] = [
-  ...HEADROOM,
-  ...HEAD,
-  '...SSSSSSSS...', // 9  shoulders
-  '..fSSSSSSSSf..', // 10 arms
-  '..fSSSSSSSSf..', // 11
-  '...SSSSSSSS...', // 12
-  '...nnnnnnnn...', // 13 hips
-  '...nnn..nnn...', // 14 legs
-  '...nnn..nnn...', // 15
-  '...eee..eee...', // 16 shoes
-]
-const BLINK_FRONT = withRows(STAND_FRONT, { 5: '...hffffffh...' })
-const WALK_FRONT = [
-  withRows(STAND_FRONT, { 15: '...nnn..eee...', 16: '...eee........' }),
-  withRows(STAND_FRONT, { 15: '...eee..nnn...', 16: '........eee...' }),
-]
-
-// ── Back (walking away): hair where the face was ───────────────────────
-const STAND_BACK = withRows(STAND_FRONT, {
-  4: '...hhhhhhhh...',
-  5: '...hhhhhhhh...',
-  6: '...hhhhhhhh...',
-  7: '....hhhhhh....',
-})
-const WALK_BACK = [
-  withRows(STAND_BACK, { 15: '...nnn..eee...', 16: '...eee........' }),
-  withRows(STAND_BACK, { 15: '...eee..nnn...', 16: '........eee...' }),
-]
-
-// ── Side, facing right (left is mirrored) ──────────────────────────────
-const SIDE: string[] = [
-  ...HEADROOM,
-  '.....hhhhh....', // 3
-  '....hhhhhff...', // 4
-  '....hhhffef...', // 5  one eye
-  '....hhfffff...', // 6
-  '.....fffff....', // 7
-  '......fff.....', // 8
-  '.....SSSSS....', // 9
-  '.....SSSSS....', // 10
-  '.....SSSSS....', // 11
-  '.....SSfSS....', // 12 hand at the side
-  '.....nnnnn....', // 13
-  '......nnn.....', // 14 legs together
-  '......nnn.....', // 15
-  '......eeee....', // 16
-]
-const WALK_SIDE = [
-  withRows(SIDE, {
-    11: '.....SSSSSf...', // arm swung forward
-    12: '.....SSSSS....',
-    14: '....nn..nn....',
-    15: '...nn....nn...',
-    16: '...ee.....ee..',
-  }),
-  SIDE,
-]
-// Talking: the front hand bobs, as if explaining something.
-const TALK_SIDE = [
-  withRows(SIDE, { 10: '.....SSSSSf...', 12: '.....SSSSS....' }),
-  withRows(SIDE, { 11: '.....SSSSSf...', 12: '.....SSSSS....' }),
-]
-
-/** Small figure beside a desk: a same-profile sub-agent (wears the owner's shirt). */
-export const HELPER: readonly string[] = [
-  '.hhhh.',
-  'hffffh',
-  'hfefeh',
-  '.ffff.',
-  'SSSSSS',
-  'SSSSSS',
-  '.n..n.',
-  '.e..e.',
-]
 
 export interface CharacterView {
   walking: boolean
@@ -106,35 +16,27 @@ export interface CharacterView {
   state: WorkerState
 }
 
-const SEATED_POSE: Record<WorkerState, Pose> = {
-  working: 'working', idle: 'idle', error: 'error', delegating: 'delegating', offline: 'idle',
-}
-
-/**
- * Frames to cycle for an actor, all spriteCols × spriteRows. Seated agents
- * use the grid view's desk frames unchanged; standing ones get the new
- * bodies. Some frames repeat to slow an animation down at the fixed 5 fps
- * idle tick (a blink every ~1.6 s, a gesture every ~0.8 s).
- */
-export function characterFrames(v: CharacterView): string[][] {
+/** The agent pose (and whether to mirror it) for an actor this frame. */
+export function officePose(v: CharacterView): { pose: Pose; mirrored: boolean } {
   if (v.walking) {
     switch (v.facing) {
-      case 'down': return WALK_FRONT
-      case 'up': return WALK_BACK
-      case 'right': return WALK_SIDE
-      case 'left': return WALK_SIDE.map(mirror)
+      case 'down': return { pose: 'walkFront', mirrored: false }
+      case 'up': return { pose: 'walkBack', mirrored: false }
+      case 'right': return { pose: 'walkSide', mirrored: false }
+      case 'left': return { pose: 'walkSide', mirrored: true }
     }
   }
-  if (v.pose === 'seated') return framesFor(SEATED_POSE[v.state])
+  if (v.pose === 'seated') return { pose: seatedPoseFor(v.state), mirrored: false }
   switch (v.facing) {
-    case 'down': return [...Array<string[]>(7).fill(STAND_FRONT), BLINK_FRONT]
-    case 'up': return [STAND_BACK]
-    case 'right': return [TALK_SIDE[0]!, TALK_SIDE[0]!, TALK_SIDE[1]!, TALK_SIDE[1]!]
-    case 'left': return [TALK_SIDE[0]!, TALK_SIDE[0]!, TALK_SIDE[1]!, TALK_SIDE[1]!].map(mirror)
+    case 'right': return { pose: 'talk', mirrored: false }
+    case 'left': return { pose: 'talk', mirrored: true }
+    // No spot rests facing up today; show the front rather than walk in place.
+    default: return { pose: 'stand', mirrored: false }
   }
 }
 
 // ── Office colours: the "night control room" (docs/decisions/024) ──────
+
 export const officePalette: Record<string, string> = {
   outline: '#0f0d0c',
   floor: '#26221f', floorSeam: '#2e2a27', floorFleck: '#2a2623',

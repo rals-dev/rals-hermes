@@ -15,7 +15,8 @@ import { DESK_COUNT, TILE, officeMap } from '@/lib/office/map'
 import { deriveOffice, placementKey, type OfficeOccupant } from '@/lib/office/placement'
 import { moveTo, placeAt, spotFor, stepActor, type Actor } from '@/lib/office/motion'
 import { MAP_H, MAP_W, drawBackground, drawScene, type ActorView, type DeskView } from '@/lib/office/render'
-import { shirtColor } from '@/lib/sprites'
+import { SEATED_GROUND, SPRITE_H } from '@/lib/agents/layers/body'
+import { personaFor } from '@/lib/agents/personas'
 import { lampTone } from '@/lib/status'
 import WorkerStation from './WorkerStation.vue'
 
@@ -79,13 +80,13 @@ function anyWalking(): boolean {
 function deskViews(): DeskView[] {
   return Array.from({ length: DESK_COUNT }, (_, desk): DeskView => {
     const o = occupantAt.value.get(desk)
-    if (!o) return { desk, screen: 'off', helpers: 0, shirt: null }
+    if (!o) return { desk, screen: 'off', helpers: 0, owner: null }
     const s = o.worker.state
     return {
       desk,
       screen: s === 'working' || s === 'delegating' ? 'on' : s === 'error' ? 'error' : 'off',
       helpers: s === 'offline' ? 0 : o.worker.helperCount ?? 0,
-      shirt: shirtColor(o.worker.profile),
+      owner: personaFor(o.worker.profile),
     }
   })
 }
@@ -94,10 +95,11 @@ function actorViews(): ActorView[] {
   const views: ActorView[] = []
   for (const o of scene.value.occupants) {
     const actor = actors.get(o.worker.profile)
-    if (actor) views.push({ actor, state: o.worker.state, shirt: shirtColor(o.worker.profile) })
+    if (actor) views.push({ actor, state: o.worker.state, persona: personaFor(o.worker.profile) })
   }
   return views
 }
+
 
 function render() {
   const ctx = canvas.value?.getContext('2d')
@@ -203,7 +205,14 @@ watch(scale, () => render(), { flush: 'post' })
 
 // ── Overlay ──
 const px = (n: number) => `${n * scale.value}px`
+// Where a figure is drawn, in map pixels: seated figures stop at the waist
+// (on the desk top), standing ones rise 8 px above their tile.
+function figureBox(p: Placed): { top: number; height: number } {
+  const rows = p.seated ? SEATED_GROUND : SPRITE_H
+  return { top: p.y + TILE - rows, height: rows }
+}
 // Nameplate text grows with the map; never below 10 px (at 1× it truncates instead).
+
 const fontPx = computed(() => `${Math.max(10, Math.round(5 * scale.value + 1))}px`)
 
 function deskBox(desk: number) {
@@ -306,10 +315,25 @@ const popoverStyle = computed(() => {
         <span
           v-if="o.worker.state === 'working' && o.worker.toolName && placed.get(o.worker.profile)?.seated"
           class="pointer-events-none absolute -translate-x-1/2 -translate-y-full truncate rounded-sm border border-[#4d4742] bg-[#242120] px-1 text-[#ede6dc]"
-          :style="{ left: px(placed.get(o.worker.profile)!.x + TILE / 2), top: px(placed.get(o.worker.profile)!.y + 2), maxWidth: px(5 * TILE) }"
+          :style="{ left: px(placed.get(o.worker.profile)!.x + TILE / 2), top: px(figureBox(placed.get(o.worker.profile)!).top - 1), maxWidth: px(5 * TILE) }"
         >
           {{ o.worker.toolName }}
         </span>
+      </template>
+
+      <!-- Error: a "!" above the head (the sprite no longer carries one). -->
+      <template v-for="o in scene.occupants" :key="`err-${o.worker.profile}`">
+        <span
+          v-if="o.worker.state === 'error' && placed.get(o.worker.profile)?.seated"
+          aria-hidden="true"
+          class="pointer-events-none absolute grid -translate-x-1/2 -translate-y-full place-items-center rounded-full bg-[#e25b4a] font-bold leading-none text-[#1b1917]"
+          :style="{
+            left: px(placed.get(o.worker.profile)!.x + TILE / 2),
+            top: px(figureBox(placed.get(o.worker.profile)!).top - 1),
+            width: px(9),
+            height: px(9),
+          }"
+        >!</span>
       </template>
 
       <!-- One focusable target per agent in the office, following them as they walk. -->
@@ -320,15 +344,16 @@ const popoverStyle = computed(() => {
           class="absolute cursor-pointer rounded-sm"
           :style="{
             left: px(placed.get(o.worker.profile)!.x),
-            top: px(placed.get(o.worker.profile)!.y - 2),
+            top: px(figureBox(placed.get(o.worker.profile)!).top),
             width: px(TILE),
-            height: px(TILE + 2),
+            height: px(figureBox(placed.get(o.worker.profile)!).height),
           }"
           :aria-label="labelFor(o)"
           :aria-expanded="selected === o.worker.profile"
           @click="open(o.worker.profile, $event)"
         />
       </template>
+
 
       <div
         v-if="selectedOccupant"
