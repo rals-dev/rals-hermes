@@ -1,6 +1,6 @@
 # ADR-021: Floor view — agents illustrated as workers
 
-Date: 2026-09-20 · Status: Accepted
+Date: 2026-09-20 · Status: Accepted · Art direction superseded by [ADR-024](024-agent-art-redesign.md)
 
 ## Context
 

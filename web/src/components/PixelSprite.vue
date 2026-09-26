@@ -1,16 +1,18 @@
 <script setup lang="ts">
-// Renders one worker-state sprite from src/lib/sprites.ts onto a <canvas>,
-// stepping through its frames at a fixed rate. Swapping sprites.ts for a
-// real sprite-sheet later only needs framesFor() to keep returning
-// string[][] grids of the same palette shape — nothing here would change.
-import { onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
-import { framesFor, palette, spriteCols, spriteRows, type Pose } from '@/lib/sprites'
+// Renders one agent (docs/decisions/024) onto a <canvas> for the grid view,
+// cycling the pose's frames. Frames come from the shared cache in
+// src/lib/agents/compose.ts, so each is painted once and blitted here.
+import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
+import { SPRITE_W, agentFrame, frameAt, frameCount, groundRow, type Pose } from '@/lib/agents/compose'
+import { personaFor } from '@/lib/agents/personas'
 
-const props = withDefaults(defineProps<{ pose: Pose; shirtColor: string; scale?: number }>(), { scale: 3 })
+const props = withDefaults(defineProps<{ profile: string; pose: Pose; scale?: number }>(), { scale: 3 })
 
 const canvas = useTemplateRef('canvas')
-const frameIndex = ref(0)
-const FPS = 5
+const persona = computed(() => personaFor(props.profile))
+// Seated poses stop at the waist; the canvas is cropped to what's drawn.
+const rows = computed(() => groundRow(props.pose))
+const frame = ref(0)
 
 let timer: ReturnType<typeof setInterval> | undefined
 function reducedMotion(): boolean {
@@ -19,51 +21,43 @@ function reducedMotion(): boolean {
 
 function restartAnimation() {
   if (timer) clearInterval(timer)
-  frameIndex.value = 0
-  const frames = framesFor(props.pose)
-  if (frames.length <= 1 || reducedMotion()) return
+  timer = undefined
+  frame.value = 0
+  if (frameCount(props.pose) <= 1 || reducedMotion()) return
   timer = setInterval(() => {
-    frameIndex.value = (frameIndex.value + 1) % frames.length
-  }, 1000 / FPS)
+    frame.value = frameAt(props.pose, performance.now())
+  }, 100)
 }
 
 function draw() {
   const el = canvas.value
   const ctx = el?.getContext('2d')
-  if (!ctx) return
-  const frames = framesFor(props.pose)
-  const grid = frames[frameIndex.value % frames.length]!
+  if (!el || !ctx) return
   ctx.imageSmoothingEnabled = false
-  ctx.clearRect(0, 0, el!.width, el!.height)
-  for (let r = 0; r < grid.length; r++) {
-    const row = grid[r]!
-    for (let c = 0; c < row.length; c++) {
-      const ch = row[c]
-      if (!ch || ch === '.') continue
-      ctx.fillStyle = ch === 'S' ? props.shirtColor : (palette[ch] ?? '#000')
-      ctx.fillRect(c * props.scale, r * props.scale, props.scale, props.scale)
-    }
-  }
+  ctx.clearRect(0, 0, el.width, el.height)
+  const image = agentFrame(persona.value, props.pose, frame.value, false)
+  ctx.drawImage(image, 0, 0, SPRITE_W, rows.value, 0, 0, SPRITE_W * props.scale, rows.value * props.scale)
 }
 
 watch(() => props.pose, restartAnimation, { immediate: true })
-// `pose` is tracked here too: a pose change that happens to land on the same
-// frameIndex (e.g. always resetting to 0) must still repaint. `onMounted`
-// guarantees the very first paint — a plain immediate watcher can fire
-// before the <canvas> ref is bound, and for a single-frame pose (offline,
-// error) there is no interval to retry it, leaving the canvas blank forever.
-watch([() => props.pose, frameIndex, () => props.shirtColor, () => props.scale], draw, { flush: 'post' })
+// `onMounted` guarantees the first paint: a plain immediate watcher can fire
+// before the <canvas> ref is bound, and a single-frame pose has no timer to
+// retry it (fixed in ead4ee4). Pose is tracked here too, so a pose change
+// that lands on the same frame number still repaints.
+watch([() => props.pose, frame, persona, () => props.scale], draw, { flush: 'post' })
 onMounted(draw)
-onBeforeUnmount(() => { if (timer) clearInterval(timer) })
+onBeforeUnmount(() => {
+  if (timer) clearInterval(timer)
+})
 </script>
 
 <template>
   <canvas
     ref="canvas"
-    :width="spriteCols * scale"
-    :height="spriteRows * scale"
+    :width="SPRITE_W * scale"
+    :height="rows * scale"
     class="[image-rendering:pixelated]"
     role="img"
-    :aria-label="`worker ${pose}`"
+    :aria-label="`${profile} ${pose}`"
   />
 </template>

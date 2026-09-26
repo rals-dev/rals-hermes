@@ -27,3 +27,6 @@ web/.vite/
 # Local tooling
 .claude/settings.local.json
 config.yaml
+
+# Local brainstorming companion mockups (not committed)
+.superpowers/

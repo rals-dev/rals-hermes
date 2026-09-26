@@ -7,7 +7,7 @@
 // Layout, in tiles: walls on rows 0–1 (cap + face, with windows and a
 // whiteboard), row 17 and columns 0/31. Desks 0–3 sit on row 5 and 4–7 on
 // row 11, at columns 3/7/11/15, each two tiles wide with its seat on the row
-// above. The lounge (sofa, coffee machine, coffee table on a rug) fills
+// above. The lounge (sofa, coffee machine, floor lamp, coffee table on a rug) fills
 // columns 21–30, rows 2–8; the meeting room sits behind glass at columns
 // 21–30, rows 10–16, entered at column 25. The door is at column 2 of the
 // bottom wall.
@@ -32,6 +32,8 @@ export type FurnitureKind =
   | 'whiteboard'
   | 'window'
   | 'rug'
+  | 'lamp'
+
 
 export interface Furniture {
   kind: FurnitureKind
@@ -109,6 +111,7 @@ function buildOfficeMap(): OfficeMap {
     piece('rug', 21, 3, 9, 6),
     piece('sofa', 22, 2, 4),
     piece('coffeeMachine', 28, 2),
+    piece('lamp', 29, 2),
     piece('plant', 30, 2),
     piece('coffeeTable', 24, 5, 2),
     // Meeting room (decorative), glass partition with a doorway at x = 25.
