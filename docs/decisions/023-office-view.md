@@ -1,6 +1,6 @@
 # ADR-023: Office view — agents walking around a 2D pixel-art office
 
-Date: 2026-09-26 · Status: Accepted
+Date: 2026-09-26 · Status: Accepted · Art (§ 4) superseded by [ADR-024](024-agent-art-redesign.md)
 
 ## Context
 
