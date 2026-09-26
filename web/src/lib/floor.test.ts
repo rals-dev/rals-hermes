@@ -83,7 +83,10 @@ describe('deriveFloor', () => {
       [],
       NOW,
     )
-    expect(links).toEqual([{ parentProfile: 'default', childProfile: 'coder-agent', parentSessionId: 'p1', childSessionId: 'c1' }])
+    expect(links).toEqual([{
+      parentProfile: 'default', childProfile: 'coder-agent', parentSessionId: 'p1', childSessionId: 'c1',
+      childStartedAt: NOW.getTime(),
+    }])
     expect(workers.find((w) => w.profile === 'default')!.state).toBe('delegating')
   })
 
@@ -140,6 +143,20 @@ describe('deriveFloor', () => {
     const oldTool = row({ profile: 'default', kind: 'tool', at: new Date(NOW.getTime() - 20 * 60_000).toISOString() })
     const { workers } = deriveFloor(overview([agent('default')]), sessionMap([s1, s2]), [recentTool, oldTool], NOW)
     expect(workers[0]).toMatchObject({ openSessions: 1, toolCallsRecent: 1 })
+  })
+
+  it('reports the latest activity per profile from sessions and feed rows, null when none', () => {
+    const old = session({ profile: 'default', id: 's1', open: false, last_active: new Date(NOW.getTime() - 600_000).toISOString() })
+    const newer = session({ profile: 'default', id: 's2', last_active: new Date(NOW.getTime() - 300_000).toISOString() })
+    const newestRow = row({ profile: 'default', kind: 'message', at: new Date(NOW.getTime() - 100_000).toISOString() })
+    const { workers } = deriveFloor(
+      overview([agent('default'), agent('product-agent')]),
+      sessionMap([old, newer]),
+      [newestRow],
+      NOW,
+    )
+    expect(workers.find((w) => w.profile === 'default')!.lastActiveAt).toBe(NOW.getTime() - 100_000)
+    expect(workers.find((w) => w.profile === 'product-agent')!.lastActiveAt).toBeNull()
   })
 
   it('preserves the overview profile order', () => {
