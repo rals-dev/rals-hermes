@@ -64,6 +64,11 @@ of the name: a hair style (short, messy, ponytail) × a hair colour × a light
 accessory (none, glasses, hood strings) × a shirt from a muted set that
 excludes the four role colours, so a fallback never impersonates a role.
 
+| Fallback set | Values (base / shade) |
+| --- | --- |
+| Shirts | stone `#a69c90` / `#7d746a`, violet `#8c7fb8` / `#6a5f94`, teal `#5f9e9a` / `#467874`, olive `#a39a5b` / `#7d7542`, rose `#b87a8c` / `#8f5a6a`, slate `#7d8a99` / `#5d6875` |
+| Hair | `#2a2320` / `#4a3c33`, `#4a3c33` / `#6b574a`, `#1b1917` / `#3a3532`, `#8a8078` / `#b3aaa0` |
+
 Shared character colours: skin `#d9b99b` / `#b8957a`, eyes `#1b1917`,
 trousers `#3a3532` / `#2a2624`, shoes `#151312`, paper `#ede6dc` with lines
 `#8a8078`, lens `#cfe3ea`, tie `#2b2826`.
@@ -134,11 +139,23 @@ and shapes change.
 | Sofa | `#4b4f5c`, `#5c6170` |
 | Plants (pot, leaves, highlight) | `#5c3a21`, `#3f6b43`, `#57865a` |
 | Coffee machine (body, LED) | `#2b2826`, `#e25b4a` |
+| Coffee table / meeting table (top, front) | `#4a3a2f`, `#33281f`; cups and papers `#ede6dc` |
+| Keyboard | `#6e665d` |
+| Bookshelf (frame, back) and books | `#33281f`, `#26201a`; `#7a3f30`, `#5b7fae`, `#b57d22`, `#468a4d`, `#6e665d` |
+| Whiteboard (frame, board, lines, mark) | `#3a3532`, `#2e2a27`, `#6e665d`, `#e8a73a` |
+| Meeting-room carpet (body, seam) | `#23262b`, `#2a2d33` |
+| Glass partition (pane, frame) | `rgba(127, 167, 217, 0.12)`, `#4d4742` |
+| Door mat | `#3a3532` |
+| Outline (all furniture) | `#0f0d0c` |
 
 All furniture gets the 1 px black outline and a 1 px highlight. Monitors are
 the light sources: an amber reflection on the desk while working, red on
-error, dark when off or unassigned. The lamp glow is painted once into the
-static background layer. The DOM nameplates are unchanged.
+error, dark when off or unassigned (the reflection is the screen colour at
+18 % opacity over the desk's left half). One piece of furniture is added: a
+floor lamp on the free tile (29, 2) between the coffee machine and the plant;
+its glow (two circles of `#f3d27a` at 10 % opacity, radii 40 and 22 px) is
+painted once into the static background layer. No zone, spot or path
+changes. The DOM nameplates are unchanged.
 
 ### Integration
 
