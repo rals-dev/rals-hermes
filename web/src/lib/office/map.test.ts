@@ -60,4 +60,9 @@ describe('officeMap', () => {
       expect(findPath(m.blocked, m.door, t), `door -> ${t.x},${t.y}`).not.toBeNull()
     }
   })
+
+  it('lights the lounge with a floor lamp on the free tile between the coffee machine and the plant', () => {
+    expect(m.furniture).toContainEqual({ kind: 'lamp', x: 29, y: 2, w: 1, h: 1, solid: true })
+  })
 })
+

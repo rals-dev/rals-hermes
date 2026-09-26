@@ -9,7 +9,9 @@
 // seated agent covers their own chair.
 
 import type { WorkerState } from '../floor'
-import { DESK_CHAIR, HELPER, MONITOR_SCREEN, characterFrames, furnitureShapes, officePalette, spritePalette, type Shape } from './art'
+import { agentFrame, frameAt, groundRow, helperFrame } from '../agents/compose'
+import type { Persona } from '../agents/personas'
+import { DESK_CHAIR, MONITOR_SCREEN, furnitureShapes, officePalette, officePose, type Shape } from './art'
 import { COLS, ROWS, TILE, type Furniture, type OfficeMap } from './map'
 import type { Actor } from './motion'
 
@@ -24,15 +26,16 @@ export interface DeskView {
   screen: 'off' | 'on' | 'error'
   /** Same-profile sub-agents to draw beside the desk (the view caps this at 3). */
   helpers: number
-  /** Owner's shirt colour, for the helpers; null for an unassigned desk. */
-  shirt: string | null
+  /** The desk owner's persona, for the helpers; null for an unassigned desk. */
+  owner: Persona | null
 }
 
 export interface ActorView {
   actor: Actor
   state: WorkerState
-  shirt: string
+  persona: Persona
 }
+
 
 export function drawBackground(ctx: CanvasRenderingContext2D, m: OfficeMap): void {
   const fill = (color: string, x: number, y: number, w: number, h: number) => {
@@ -50,18 +53,15 @@ export function drawBackground(ctx: CanvasRenderingContext2D, m: OfficeMap): voi
         fill(officePalette.carpetSeam!, x, y + TILE - 1, TILE, 1)
         continue
       }
-      // Wood planks: 4 px bands with staggered end joints.
+      // Charcoal floor tiles with 1 px seams and the odd fleck.
       fill(officePalette.floor!, x, y, TILE, TILE)
-      for (let band = 0; band < 4; band++) {
-        fill(officePalette.floorSeam!, x, y + band * 4 + 3, TILE, 1)
-        const joint = ((ty * 4 + band) * 7 + tx * 3) % TILE
-        fill(officePalette.floorSeam!, x + joint, y + band * 4, 1, 3)
-        fill(officePalette.floorLight!, x + ((joint + 8) % TILE), y + band * 4, 1, 1)
-      }
+      fill(officePalette.floorSeam!, x, y + TILE - 1, TILE, 1)
+      fill(officePalette.floorSeam!, x + TILE - 1, y, 1, TILE)
+      if ((tx * 7 + ty * 3) % 5 === 0) fill(officePalette.floorFleck!, x + 5, y + 6, 1, 1)
     }
   }
 
-  // Walls: a dark cap all round, a lit face along the top.
+  // Walls: a dark cap all round, a dark face along the top.
   fill(officePalette.wallCap!, 0, 0, MAP_W, TILE)
   fill(officePalette.wallFace!, TILE, TILE, MAP_W - 2 * TILE, TILE)
   fill(officePalette.wallBase!, TILE, 2 * TILE - 3, MAP_W - 2 * TILE, 3)
@@ -78,6 +78,19 @@ export function drawBackground(ctx: CanvasRenderingContext2D, m: OfficeMap): voi
   for (const f of m.furniture) {
     if (BACKGROUND_KINDS.has(f.kind)) drawShapes(ctx, f.x * TILE, f.y * TILE, furnitureShapes(f.kind, f.w, f.h))
   }
+
+  // The lounge lamp's glow, painted once: a warm pool on the rug.
+  ctx.fillStyle = officePalette.lamp!
+  ctx.globalAlpha = 0.1
+  for (const f of m.furniture) {
+    if (f.kind !== 'lamp') continue
+    for (const r of [40, 22]) {
+      ctx.beginPath()
+      ctx.arc(f.x * TILE + TILE / 2, (f.y + 2) * TILE, r, 0, Math.PI * 2)
+      ctx.fill()
+    }
+  }
+  ctx.globalAlpha = 1
 }
 
 export function drawScene(
@@ -112,15 +125,21 @@ export function drawScene(
         const [sx, sy, sw, sh] = MONITOR_SCREEN
         ctx.fillStyle = officePalette[view.screen === 'on' ? 'screenOn' : view.screen === 'error' ? 'screenError' : 'screenOff']!
         ctx.fillRect(x + sx, y + sy, sw, sh)
+        if (view.screen !== 'off') {
+          // A lit screen spills onto the desk's left half (ADR-024: 18 %).
+          ctx.globalAlpha = 0.18
+          ctx.fillRect(x + 1, y + 1, 15, 9)
+          ctx.globalAlpha = 1
+        }
       },
     })
-    if (view.shirt && view.helpers > 0) {
+
+    if (view.owner && view.helpers > 0) {
+      const helper = helperFrame(view.owner)
       items.push({
         bottom: y, order: 1,
         draw: () => {
-          for (let i = 0; i < Math.min(view.helpers, 3); i++) {
-            drawGrid(ctx, HELPER, x - 7 * (i + 1), y - HELPER.length, view.shirt!)
-          }
+          for (let i = 0; i < Math.min(view.helpers, 3); i++) ctx.drawImage(helper, x - 9 * (i + 1), y - helper.height)
         },
       })
     }
@@ -138,11 +157,12 @@ export function drawScene(
 
 function drawActor(ctx: CanvasRenderingContext2D, a: ActorView, x: number, y: number, nowMs: number, still: boolean): void {
   const walking = a.actor.waypoints.length > 0
-  const frames = characterFrames({ walking, facing: a.actor.facing, pose: a.actor.pose, state: a.state })
-  const period = walking ? 125 : 200 // 8 fps stride, 5 fps idle animations
-  const frame = still ? frames[0]! : frames[Math.floor(nowMs / period) % frames.length]!
-  // The 14×17 sprite stands in the 16×16 box: centred, feet on the box's bottom edge.
-  drawGrid(ctx, frame, x + 1, y + TILE - frame.length, a.shirt)
+  const { pose, mirrored } = officePose({ walking, facing: a.actor.facing, pose: a.actor.pose, state: a.state })
+  const frame = still ? 0 : frameAt(pose, nowMs)
+  // The 16-wide figure fills its 16 px box, its ground row on the box's bottom
+  // edge: a standing head rises 8 px into the row above; a seated waist meets
+  // the desk top.
+  ctx.drawImage(agentFrame(a.persona, pose, frame, mirrored), x, y + TILE - groundRow(pose))
 }
 
 function drawFurniture(ctx: CanvasRenderingContext2D, f: Furniture): void {
@@ -156,14 +176,3 @@ function drawShapes(ctx: CanvasRenderingContext2D, ox: number, oy: number, shape
   }
 }
 
-function drawGrid(ctx: CanvasRenderingContext2D, grid: readonly string[], ox: number, oy: number, shirt: string): void {
-  for (let r = 0; r < grid.length; r++) {
-    const row = grid[r]!
-    for (let c = 0; c < row.length; c++) {
-      const ch = row[c]!
-      if (ch === '.') continue
-      ctx.fillStyle = ch === 'S' ? shirt : spritePalette[ch] ?? '#000'
-      ctx.fillRect(ox + c, oy + r, 1, 1)
-    }
-  }
-}
