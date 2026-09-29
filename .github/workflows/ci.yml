@@ -63,6 +63,17 @@ jobs:
       - run: npm test
       - run: npm run build
 
+  scripts:
+    # Host-side deploy scripts (ADR-025). Not a dependency of the image job:
+    # they never ship in it.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: shellcheck
+        run: shellcheck deploy/hermes-dashboard/*.sh
+      - name: test
+        run: bash deploy/hermes-dashboard/profile_test.sh
+
   image:
     # Builds on every push to main and on version tags; publishes to GHCR
     # under the repository's own name (ADR-015).
