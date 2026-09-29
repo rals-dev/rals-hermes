@@ -63,9 +63,9 @@ bumping the digest in `/srv/stacks/hermes/compose.yaml`:
 # terminal 1 — tunnel to the Hermes container (port 8642 is not published)
 ssh -N -L 8642:$(ssh server-pribadi "docker inspect -f '{{(index .NetworkSettings.Networks \"proxy-net\").IPAddress}}' hermes"):8642 server-pribadi
 
-# terminal 2 — keys stay in this shell only
+# terminal 2 — keys stay in this shell only; one prompt per profile in config.yaml
 hermes-keys() {
-  for v in HERMES_KEY_DEFAULT HERMES_KEY_CODER HERMES_KEY_TESTER HERMES_KEY_PRODUCT; do
+  for v in $(sed -n 's/^      key_env: //p' config.yaml); do
     printf '%s: ' "$v"; read -rs "$v"; echo; export "$v"
   done
 }
@@ -87,6 +87,8 @@ Read the key values on the host with
 | Prometheus target `hermes-bff` DOWN | Dashboard container not on `proxy-net` or renamed | `docker exec prometheus wget -qO- http://hermes-dashboard:8080/healthz` |
 | Login 429 | Five wrong keys within a minute from one address | Wait 60 s |
 | Start-up fails: `environment variable … is required but empty` | `.env` incomplete | Fill it; the message names the variable |
+| A new Hermes profile is missing from the dashboard | Profiles are read from `config.yaml` at start-up, never discovered | § 8 |
+| A just-added profile stays `unauthorized` | Its key was generated but Hermes has not restarted | `cd /srv/stacks/hermes && docker compose restart hermes` |
 
 ## 6. Emergency: build and load an image without CI
 
@@ -102,3 +104,31 @@ docker save rals-hermes:manual | ssh server-pribadi docker load
 Start a run. Every upstream call is `GET`; the acceptance test "30 minutes
 open, then 30 minutes closed, run count unchanged" (`docs/prd.md` § 10 item 9)
 is the check to repeat after any change to `internal/hermes`.
+
+## 8. Adding or removing a profile
+
+`deploy/hermes-dashboard/profile.sh` (ADR-025) edits `config.yaml` and `.env`
+in the stack directory, recreates the dashboard, and rolls both files back if
+it does not start with the change. Run it as the user that owns
+`/srv/data/hermes`, from a checkout; nothing is copied to the host:
+
+```
+ssh <host> 'cd /srv/stacks/hermes-dashboard && bash -s -- add researcher-agent' < deploy/hermes-dashboard/profile.sh
+ssh <host> 'cd /srv/stacks/hermes-dashboard && bash -s -- remove researcher-agent' < deploy/hermes-dashboard/profile.sh
+```
+
+- The profile must already exist in Hermes (`/srv/data/hermes/profiles/<name>`).
+- If its `.env` has an `API_SERVER_KEY`, the key is reused and Hermes needs
+  nothing. If not, a key is generated and written there **after** the
+  dashboard is verified; Hermes loads it on its next restart. Add
+  `--restart-hermes` to `add` to restart immediately. That interrupts every
+  agent's in-flight work.
+- `remove` never touches Hermes' files. It refuses to remove the last
+  profile.
+- Backups are left as `config.yaml.bak-<timestamp>` and `.env.bak-<timestamp>`.
+- The script refuses, without changing anything, when `upstream.profiles` is
+  not the last block of `config.yaml`, the profile is already configured, or
+  its `HERMES_KEY_*` variable is already in `.env`.
+- It needs `compose.yaml` with `env_file: .env` (the repository version since
+  ADR-025). With an older copy, the new variable never reaches the container,
+  and the script rolls back.

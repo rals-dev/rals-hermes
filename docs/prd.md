@@ -90,6 +90,8 @@ frontend) and one for log shipping.
 | `coder-agent` | Coding agent | Delegates implementation to Claude Code; GitHub operations via `gh`, restricted to one dedicated account |
 | `tester-agent` | Testing agent | Install/build/run tests on cloned repos; no Claude Code login, read-only GitHub access |
 | `product-agent` | *(role to be documented by the operator)* | Discovered on the host during the handoff review; included in v1 (ADR-005) |
+| `researcher-agent` | Technology research, read-only | Reports built from primary sources, with trade-offs and a recommendation; never changes repositories or Kanban. Added 2026-09-29 (ADR-025) |
+| `reviewer-agent` | Pull-request review, read-only | Independent reviewer of `coder-agent`'s PRs; never edits, comments, approves, merges or deploys. Added 2026-09-29 (ADR-025) |
 
 Credential isolation is why `tester-agent` exists: untrusted repository code
 must not run in a context that holds valuable credentials. **The BFF design
@@ -164,6 +166,7 @@ BFF.
    taxonomy in § 5.
 4. **Profiles are added through configuration, not code.** Adding a fifth
    profile must require only a config change and a restart.
+   `deploy/hermes-dashboard/profile.sh` automates both (ADR-025).
 5. **Everything committed to this repository is written in English** — code,
    comments, commit messages, docs (ADR-020).
 
@@ -572,6 +575,9 @@ referenced variable is empty.
 | `HERMES_KEY_PRODUCT` | yes | Key for profile `product-agent` |
 | `LOG_LEVEL` | no | Default `info` |
 
+Later profiles follow the same pattern (`HERMES_KEY_RESEARCHER`,
+`HERMES_KEY_REVIEWER`, …); `profile.sh` adds and removes them (ADR-025).
+
 ### Deployment
 
 One new compose stack at `/srv/stacks/hermes-dashboard/`, joined to the
@@ -691,4 +697,5 @@ linked ADR.
 | Usage monitoring | `GET /api/usage` + an Overview strip: token/cost totals per profile, on the fly, trailing 24h window. No persisted state — a rolling window instead of the "sum everything" ADR-007 deferred. | [ADR-022](decisions/022-usage-monitoring.md) |
 | Office view | A Grid \| Office toggle on `/floor`: agents as pixel-art characters who sit at their desk while working, stand at a colleague's desk while delegating to them, and move to the lounge after two idle minutes. Hand-written canvas renderer, no new dependency, no backend change. | [ADR-023](decisions/023-office-view.md) |
 | Agent art redesign | Four role personas (16×24, outlined) in the instrument-panel palette, a procedural persona for any other profile, and a "night control room" office. Layered pixel art composed at runtime and cached; no new dependency, no backend change. | [ADR-024](decisions/024-agent-art-redesign.md) |
+| Profile script | `deploy/hermes-dashboard/profile.sh add\|remove <name>`: reuses or generates the profile's key, edits `config.yaml` and `.env`, verifies the dashboard restarted with the change or rolls back. Hermes restarts only on `--restart-hermes`. `compose.yaml` switched to `env_file`. Auto-discovery was rejected: reading keys would expose every agent's secrets. | [ADR-025](decisions/025-profile-script.md) |
 

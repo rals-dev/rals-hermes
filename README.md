@@ -103,7 +103,10 @@ on macOS it also sidesteps SDK/Command Line Tools mismatches in the linker.
 name of the env var holding the dashboard key, cache TTL, activity poller
 bounds, the upstream timeout, and one entry per profile with `name`,
 `base_url` and `key_env`. Adding a profile is a config change and a restart;
-no code is involved.
+no code is involved. On the host, `deploy/hermes-dashboard/profile.sh add
+<name>` does both: it reuses or generates the profile's key, updates
+`config.yaml` and `.env`, and rolls back if the dashboard does not come up
+with the new profile (`docs/runbook.md` § 8, ADR-025).
 
 ## API
 
