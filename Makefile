@@ -1,4 +1,4 @@
-.PHONY: build run test test-race lint vet fixtures web
+.PHONY: build run test test-race lint vet fixtures web test-scripts lint-scripts
 
 # Builds the frontend first so it is embedded (ADR-011).
 build: web
@@ -20,6 +20,13 @@ vet:
 
 lint:
 	golangci-lint run ./...
+
+# Host-side scripts (ADR-025): a fake docker stands in for the host.
+test-scripts:
+	bash deploy/hermes-dashboard/profile_test.sh
+
+lint-scripts:
+	shellcheck deploy/hermes-dashboard/*.sh
 
 fixtures:
 	./scripts/collect-fixtures.sh
