@@ -17,9 +17,11 @@ on:
       - "**/*.md"
 
 # A newer push to a PR supersedes an in-flight run. Runs on main queue
-# instead: cancelling one could cut a deploy off mid-way.
+# instead: cancelling one could cut a deploy off mid-way. PR runs are keyed
+# by event and head branch: a PR run queued after its merge sees
+# github.ref = refs/heads/main and would otherwise cancel main's run.
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.event_name }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
