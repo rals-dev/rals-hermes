@@ -59,16 +59,21 @@ previous tag. Rollback is `./deploy.sh <previous-sha>`; past deploys are in
    ```
    restrict,from="100.64.0.0/10,fd7a:115c:a1e0::/48",command="/srv/stacks/hermes-dashboard/deploy.sh" ssh-ed25519 AAAA... gha-deploy
    ```
+   With Tailscale SSH on (`tailscale set --ssh`), tailnet connections to
+   port 22 never reach sshd, so the key above would not apply. Have sshd
+   also listen on 2222 (`Port 22` + `Port 2222` in
+   `/etc/ssh/sshd_config.d/`, then `systemctl daemon-reload && systemctl
+   restart ssh.socket`) and open it on `tailscale0` only in the firewall.
 2. Tailscale: add `tag:ci` to `tagOwners`, allow `tag:ci` only to the host
-   on `tcp:22`, and create an OAuth client with the `auth_keys` write scope
-   for `tag:ci`.
+   on `tcp:2222`, and create an OAuth client with the `auth_keys` write
+   scope for `tag:ci`.
 3. GitHub, environment `production` (required reviewer, deployment branch
    `main` only):
    - secrets `TS_OAUTH_CLIENT_ID`, `TS_OAUTH_SECRET`, `DEPLOY_SSH_KEY`
      (the private key);
    - variables `DEPLOY_HOST` (the host's tailnet IP), `DEPLOY_USER`,
-     `DEPLOY_KNOWN_HOSTS` (`ssh-keyscan -t ed25519 <tailnet-ip>`),
-     `DASHBOARD_URL`.
+     `DEPLOY_PORT` (default 2222), `DEPLOY_KNOWN_HOSTS`
+     (`ssh-keyscan -p 2222 -t ed25519 <tailnet-ip>`), `DASHBOARD_URL`.
 
 ## 3. Upgrading Hermes
 
