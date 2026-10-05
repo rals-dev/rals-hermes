@@ -142,6 +142,9 @@ jobs:
           KNOWN_HOSTS: ${{ vars.DEPLOY_KNOWN_HOSTS }}
           DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
           DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          # Not 22: with Tailscale SSH on, the host's tailnet port 22 bypasses
+          # sshd and the authorized_keys restriction on this key.
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT || '2222' }}
         run: |
           install -m 700 -d ~/.ssh
           install -m 600 /dev/null ~/.ssh/deploy
@@ -149,4 +152,5 @@ jobs:
           printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
           # The forced command reads the tag from the SSH command line.
           ssh -i ~/.ssh/deploy -o IdentitiesOnly=yes -o BatchMode=yes \
-            -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" "${GITHUB_SHA::7}"
+            -o StrictHostKeyChecking=yes -p "$DEPLOY_PORT" \
+            "$DEPLOY_USER@$DEPLOY_HOST" "${GITHUB_SHA::7}"
