@@ -36,13 +36,39 @@ repository owner).
 
 ## 2. Upgrading the dashboard
 
+Every push to `main` that publishes an image queues the CI `deploy` job,
+which waits for approval in the `production` environment. Once approved it
+runs `deploy.sh <short-sha>` on the host over SSH. By hand, from the stack
+directory:
+
 ```
-cd /srv/stacks/hermes-dashboard
-sed -i 's/^IMAGE_TAG=.*/IMAGE_TAG=<sha>/' .env     # a commit SHA from CI, not "latest"
-docker compose pull && docker compose up -d
+./deploy.sh <sha>       # a 7-character commit SHA from CI, or a v* tag
+./deploy.sh status      # pinned tag and live /healthz
 ```
 
-Rollback is the same command with the previous SHA.
+`deploy.sh` pulls the tag, pins it in `.env`, recreates the container and
+waits for `/healthz` to report that version; otherwise it restores the
+previous tag. Rollback is `./deploy.sh <previous-sha>`; past deploys are in
+`deploy-history.log`.
+
+### Deploy job setup (once)
+
+1. Host: copy `deploy/hermes-dashboard/deploy.sh` next to `compose.yaml`,
+   generate a key pair for CI and add the public key to the stack owner's
+   `~/.ssh/authorized_keys`, pinned to the script and to tailnet addresses:
+   ```
+   restrict,from="100.64.0.0/10,fd7a:115c:a1e0::/48",command="/srv/stacks/hermes-dashboard/deploy.sh" ssh-ed25519 AAAA... gha-deploy
+   ```
+2. Tailscale: add `tag:ci` to `tagOwners`, allow `tag:ci` only to the host
+   on `tcp:22`, and create an OAuth client with the `auth_keys` write scope
+   for `tag:ci`.
+3. GitHub, environment `production` (required reviewer, deployment branch
+   `main` only):
+   - secrets `TS_OAUTH_CLIENT_ID`, `TS_OAUTH_SECRET`, `DEPLOY_SSH_KEY`
+     (the private key);
+   - variables `DEPLOY_HOST` (the host's tailnet IP), `DEPLOY_USER`,
+     `DEPLOY_KNOWN_HOSTS` (`ssh-keyscan -t ed25519 <tailnet-ip>`),
+     `DASHBOARD_URL`.
 
 ## 3. Upgrading Hermes
 
